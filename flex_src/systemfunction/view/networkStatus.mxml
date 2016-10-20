@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <mx:VBox  xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/mx" 
@@ -16,9 +16,7 @@
 		<!-- 下载是获取文件目录的远程对象-->
 		<s:RemoteObject id="fileDirHelper" destination="fileDirHelper" endpoint="messagebroker/amf"/> 	
 		<!-- 下载拓扑文件的远程对象-->
-		<s:RemoteObject id="fileDownLoad" destination="fileDownLoad" endpoint="messagebroker/amf"/>
-		
-		<s:RemoteObject id="getAllPath" destination="getPath" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="fileDownLoad" destination="fileDownLoad" endpoint="messagebroker/amf"/> 
 	</fx:Declarations>
 	
 	<fx:Script>
@@ -49,29 +47,18 @@
 			[Bindable] private var PhyNet:XML;
 			private var timer:Timer=new Timer(1000);
 			private var file:FileReference;//定义一个FileReference 进行文件的上传
-			//展示虚拟网所需
-			[Bindable] var virNodeInfo:ArrayCollection ;
-			[Bindable] var virLinkInfo:ArrayCollection ;
-			public static var fileCollArray:ArrayCollection = new ArrayCollection();
-			public var path:String;
-			public var virNodes:int;
-			public var virLinks:int;
-			public var nodeCpu:Array = new Array();
-			public var linkFrom:Array = new Array();
-			public var linkTo:Array = new Array();
-			public var linkBw:Array = new Array();
 			
 			
 			private var downLoadFile:ArrayCollection= new ArrayCollection();
 			[Bindable] public var treeData:ArrayCollection=new ArrayCollection();
 			
 			//展示数据所需要的arrayCollection
-			[Bindable] var subNodeInfo:ArrayCollection;
-			[Bindable] var subLinkInfo:ArrayCollection;
+			[Bindable] var subNodeInfo:ArrayCollection ;
+			[Bindable] var subLinkInfo:ArrayCollection ;
+			[Bindable] var virNodeInfo:ArrayCollection ;
+			[Bindable] var virLinkInfo:ArrayCollection ;
 			[Bindable]var nodealarmInfo:ArrayCollection;
 			[Bindable]var linkalarmInfo:ArrayCollection;
-			
-			[Bindable]private var virTopoXML:XML;
 			
 			
 			//初始化
@@ -85,154 +72,6 @@
 					{title:"虚拟请求2"},
 					{title:"虚拟请求3"}			
 				]});
-				
-				
-//				path = "D://flexW//top//topo-500-5-10-10//topo_for_use//";      //需要修改路径的
-//				fileDirHelper.addEventListener(ResultEvent.RESULT,fileresult);
-//				fileDirHelper.getFileDectory(path);
-				getPathAndshowList();
-			}
-			
-			public function getPathAndshowList(){
-				getAllPath.addEventListener(ResultEvent.RESULT, filePathResult);
-				getAllPath.getVirReqPath();
-			}
-			
-			private function filePathResult(event:ResultEvent){
-				path = event.result as String;
-				fileDirHelper.addEventListener(ResultEvent.RESULT,fileresult);
-				fileDirHelper.getFileDectory(path);
-			}
-			
-			private function fileresult(event:ResultEvent):void
-			{
-				var temp:ArrayCollection = new ArrayCollection();
-				temp= event.result as ArrayCollection;
-				for each( var i : Object in temp){
-					var o:Object = new Object();
-					o.name = i.toString();
-					fileCollArray.addItem(o.name);
-					
-				} 
-				
-			}
-			protected function dg_showFileList_clickHandler(event:ListEvent):void
-			{
-				var fileName:String = this.dg_showFileList.selectedItem.toString(); 
-				vir_topName.text=fileName;
-				var showFileName:String= "您选择的是："+fileName;
-				Alert.show(showFileName);
-			}
-			
-			//查看选中虚拟请求的节点信息
-			
-			protected function selectVirNode_clickHandler(event:MouseEvent):void
-			{
-				physical_node.width=0;
-				physical_node.height=0;
-				physical_link.width=0;
-				physical_link.height=0;
-				virtual_files.width=0;
-				virtual_files.height=0;
-				virtual_node.width=1000;
-				virtual_node.height=480;
-				virtual_link.width=0;
-				virtual_link.height=0;
-				alarmnode_info.width=0;
-				alarmnode_info.height=0;
-				alarmnode_info.visible=false;
-				
-				
-				
-				physical_node.visible=false;
-				physical_link.visible=false;
-				virtual_files.visible=false;
-				virtual_node.visible=true;
-				virtual_link.visible=false;
-				
-				
-				var virPath : String = path+vir_topName.text;
-				//				var virPath : String = vir_topName.text;
-				//				Alert.show(virPath);
-				showVirRequest(virPath);
-			}
-			
-			public function showVirRequest(fileName:String){
-				embedAlg.print(fileName);
-				var textF : String = vir_topName.text;
-				var fileSplit:Array = new Array();
-				fileSplit = textF.split(".txt");
-				var realF : String = fileSplit[0]; 
-				//				Alert.show(realF);
-				var pathXml: String = "XML/newXml/"+realF+".xml";
-				//				Alert.show(pathXml);
-				loadVirNetInfo(pathXml);
-			}
-			
-			public function loadVirNetInfo(fileName:String)
-			{
-				var virfilePath:String  = fileName;           //需要修改路径的
-				Alert.show(virfilePath);
-				
-				var virRequest:URLRequest = new URLRequest(virfilePath);
-				var virLoader:URLLoader=new URLLoader(virRequest);
-				virLoader.dataFormat=URLLoaderDataFormat.TEXT;
-				virLoader.addEventListener(Event.COMPLETE, loadVirEmbedOut);				
-			}
-			
-			protected function loadVirEmbedOut(event:Event){
-				Alert.show("ninhao................");
-				virTopoXML = XML(event.target.data);
-				var virNodes:int = virTopoXML.nodes.node.length();
-				var virLinks:int = virTopoXML.links.link.length();
-				Alert.show("nodes ="+virNodes+",links ="+virLinks);
-				
-				//加载虚拟节点信息
-				var virTopoResult:Array = new Array();
-				var i:int = 0;				
-				for( i = 0; i < virNodes; i++)
-				{
-					virTopoResult[i] ={vnode:"vNode"+i ,vcpu:virTopoXML.nodes.node[i].@CPU};
-				}
-				virNodeInfo  = new ArrayCollection(virTopoResult);	
-				
-				//加载虚拟链路信息
-				var virTopoLink:Array = new Array();
-				for(i = 0; i < virLinks; i++)
-				{
-					virTopoLink[i] = {vlink:"VLink"+i,vfrom:virTopoXML.links.link[i].@ fromNode,vto:virTopoXML.links.link[i].@ toNode,
-						vboard:virTopoXML.links.link[i].@ Bandwidth};
-				}
-				virLinkInfo = new ArrayCollection(virTopoLink);
-			}
-			
-			//查看选中虚拟请求的链路信息
-			
-			protected function selectVirLink_clickHandler(event:MouseEvent):void
-			{
-				physical_node.width=0;
-				physical_node.height=0;
-				physical_link.width=0;
-				physical_link.height=0;
-				virtual_files.width=0;
-				virtual_files.height=0;
-				virtual_node.width=0;
-				virtual_node.height=0;
-				virtual_link.width=1000;
-				virtual_link.height=480;
-				alarmnode_info.width=0;
-				alarmnode_info.height=0;
-				alarmnode_info.visible=false;
-				
-				physical_node.visible=false;
-				physical_link.visible=false;
-				virtual_files.visible=false;
-				virtual_node.visible=false;
-				virtual_link.visible=true;
-				var virPath : String = path+vir_topName.text;
-				//				var virPath : String = vir_topName.text;
-				//				Alert.show(virPath);
-				showVirRequest(virPath);
 			}
 						
 			private function tree_change(event:Event):void{ 
@@ -242,8 +81,6 @@
 					physical_node.height=480;
 					physical_link.width=0;
 					physical_link.height=0;
-					virtual_files.width=0;
-					virtual_files.height=0;
 					virtual_node.width=0;
 					virtual_node.height=0;
 					virtual_link.width=0;
@@ -252,18 +89,16 @@
 					alarmnode_info.height=0;
 					alarmnode_info.visible=false;
 					
-//					alarmlink_info.width=0;
-//					alarmlink_info.height=0;
-//					alarmlink_info.visible=false;
+				//	alarmlink_info.width=0;
+				//	alarmlink_info.height=0;
+				//	alarmlink_info.visible=false;
 					
 					physical_node.visible=true;
 					physical_link.visible=false;
-					virtual_files.visible=false;
 					virtual_node.visible=false;
 					virtual_link.visible=false;
 					
 					//加载物理网络信息
-					//			Alert.show("++++"+mapRelation.subTopoName);
 					loadSubNetInfo(mapRelation.subTopoName);
 					
 				}else if(str=="物理链路信息"){
@@ -271,8 +106,6 @@
 					physical_node.height=0;
 					physical_link.width=1000;
 					physical_link.height=480;
-					virtual_files.width=0;
-					virtual_files.height=0;;
 					virtual_node.width=0;
 					virtual_node.height=0;
 					virtual_link.width=0;
@@ -288,39 +121,58 @@
 					
 					physical_node.visible=false;
 					physical_link.visible=true;
-					virtual_files.visible=false;
 					virtual_node.visible=false;
 					virtual_link.visible=false;
 					
 					//加载物理链路信息
 					loadSubLinkInfo(mapRelation.subTopoName);				
-				}else if(str=="查看详情"){
+				}else if(str=="虚拟节点信息"){
 					physical_node.width=0;
 					physical_node.height=0;
 					physical_link.width=0;
 					physical_link.height=0;
-					virtual_files.width=1000;
-					virtual_files.height=480;
-					virtual_node.width=0;
-					virtual_node.height=0;
+					virtual_node.width=1000;
+					virtual_node.height=480;
 					virtual_link.width=0;
 					virtual_link.height=0;
 					alarmnode_info.width=0;
 					alarmnode_info.height=0;
 					alarmnode_info.visible=false;
 					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
 					physical_node.visible=false;
 					physical_link.visible=false;
-					virtual_files.visible=true;
-					virtual_node.visible=false;
+					virtual_node.visible=true;
 					virtual_link.visible=false;
+				}else if(str=="虚拟链路信息"){
+					physical_node.width=0;
+					physical_node.height=0;
+					physical_link.width=0;
+					physical_link.height=0;
+					virtual_node.width=0;
+					virtual_node.height=0;
+					virtual_link.width=1000;
+					virtual_link.height=480;
+					alarmnode_info.width=0;
+					alarmnode_info.height=0;
+					alarmnode_info.visible=false;
+//					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
+					physical_node.visible=false;
+					physical_link.visible=false;
+					virtual_node.visible=false;
+					virtual_link.visible=true;
 				}else if(str=="告警信息详情"){
 					physical_node.width=0;
 					physical_node.height=0;
 					physical_link.width=0;
 					physical_link.height=0;
-					virtual_files.width=0;
-					virtual_files.height=0;
 					virtual_node.width=0;
 					virtual_node.height=0;
 					virtual_link.width=0;
@@ -335,7 +187,6 @@
 					
 					physical_node.visible=false;
 					physical_link.visible=false;
-					virtual_files.visible=false;
 					virtual_node.visible=false;
 					virtual_link.visible=false;
 					
@@ -368,7 +219,7 @@
 				var i:int = 0;				
 				for( i = 0; i < nodes; i++)
 				{
-					subTopoResult[i] ={pnode:"phyNode"+i ,pcpu:subnodeXML.nodes.node[i].@cpu, pcpuUtil: subnodeXML.nodes.node[i].@utilization};
+					subTopoResult[i] ={pnode:i ,pcpu:subnodeXML.nodes.node[i].@cpu, pcpuUtil: subnodeXML.nodes.node[i].@utilization};
 				}
 				subNodeInfo  = new ArrayCollection(subTopoResult);	
 				
@@ -397,7 +248,7 @@
 				var i:int = 0;
 				for(i = 0; i < links; i++)
 				{
-					subTopoLink[i] = {plink:"phyLink"+i, pfrom:sublinkXML.links.link[i].@ linkFrom, pto:sublinkXML.links.link[i].@ linkTo,
+					subTopoLink[i] = {plink:i, pfrom:sublinkXML.links.link[i].@ linkFrom, pto:sublinkXML.links.link[i].@ linkTo,
 						ppboard:sublinkXML.links.link[i].@ bw,  boardUtil:sublinkXML.links.link[i].@ utilization};
 				}
 				subLinkInfo = new ArrayCollection(subTopoLink);
@@ -474,40 +325,19 @@
 				
 			}
 			
-			protected function nodeReturnClick(event:MouseEvent):void{
-				
-				virtual_node.width=0;
-				virtual_node.height=0;
-				virtual_node.visible = false;
-				
-				virtual_files.width = 1000;
-				virtual_files.height = 480;
-				virtual_files.visible = true;
-				
-			}
-			protected function linkReturnClick(event:MouseEvent):void{
-				
-				virtual_link.width=0;
-				virtual_link.height=0;
-				virtual_link.visible = false;
-				
-				virtual_files.width= 1000;
-				virtual_files.height= 480;
-				virtual_files.visible = true;
-			}
-			
-			
 		]]>
 	</fx:Script>
 	
-	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false">
+	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false" skinClass="skin.bgImg">
 		<mx:HDividedBox id="hdb" width="100%" height="100%">
 			<mx:VBox id="treeBox" width="20%" height="100%" minWidth="0" horizontalScrollPolicy="off" horizontalAlign="left" backgroundColor="#7094C9">
-				<mx:Box id="buttonBox"  horizontalAlign="left" backgroundColor="#7094C9" width="100%" height="100%">
-					
+				<mx:Box id="buttonBox"  horizontalAlign="left" paddingTop="2" paddingBottom="2" backgroundColor="#7094C9" width="100%" height="13.2%">
 					<!-- 修改的部分-->
 					<mx:Tree  id="tree" labelField="@label"  
-							  change="tree_change(event)" fontSize="25" width="300"  height="1000"  > 
+							  change="tree_change(event)" fontSize="20" width="227"  height="740" contentBackgroundColor="#7094C9"
+							  folderClosedIcon="@Embed(source='Images/button/bird.png')"
+							  folderOpenIcon="@Embed(source='Images/button/bird.png')"
+							  defaultLeafIcon="@Embed(source='Images/button/bird.png')"> 
 						
 						<mx:dataProvider> 
 							<fx:XMLList> 
@@ -516,7 +346,8 @@
 									<city label="物理链路信息"/> 
 								</province> 
 								<province label="虚拟网络信息"> 
-									<city label="查看详情"/> 
+									<city label="虚拟节点信息"/> 
+									<city label="虚拟链路信息"/> 
 								</province> 
 								<province label="告警信息"> 
 									<city label="告警信息详情"/>  
@@ -557,37 +388,18 @@
 					</mx:columns>					
 				</mx:DataGrid>
 			</s:BorderContainer>
-			<s:BorderContainer  id="virtual_files" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
-				<!-- 虚拟请求文件列表-->
-				<s:Label text="相关虚拟请求文件列表" x="40" y="40" />
-				<mx:DataGrid  id="dg_showFileList" width="240" height="360" x= "40" y="60" dataProvider="{fileCollArray}"  itemClick="dg_showFileList_clickHandler(event)">   
-					<mx:columns>
-						<mx:DataGridColumn headerText="虚拟文件列表" dataField="name"/> 
-					</mx:columns>					
-				</mx:DataGrid>
-				<s:Label text="要查看的虚拟请求的文件:" x="360" y="100"/>
-				<s:TextInput id="vir_topName" height="20" width="200" x="520" y="100"/>
-				<s:Button id="selectVirNode" label="查看虚拟请求节点的信息" height="30" x="520" y="140" click="selectVirNode_clickHandler(event)"/>
-				<s:Button id="selectVirLink" label="查看虚拟请求链路的信息" height="30" x="520" y="180" click="selectVirLink_clickHandler(event)"/>
-				
-			</s:BorderContainer>
 			<s:BorderContainer  id="virtual_node" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
 				<!-- 虚拟节点信息列表-->
-				<mx:Label text="正在查看的虚拟请求的文件是:" x="10" y="10"/>
-				<mx:Label text="{vir_topName.text}" x="200" y="10"/>
-				<mx:DataGrid    width="1000" height="400" x="0" y ="30" dataProvider="{virNodeInfo}">   
+				<mx:DataGrid    width="100%" height="100%" >   
 					<mx:columns>
 						<mx:DataGridColumn headerText="虚拟节点ID" dataField="vnode"/> 
 						<mx:DataGridColumn headerText="CPU" dataField="vcpu"/> 
 					</mx:columns>					
 				</mx:DataGrid>
-				<mx:Button label="返回" height="40" width="100" x="780" y="440" id="myNodeSubmitButton" click="nodeReturnClick(event);"/>
 			</s:BorderContainer>
-			<s:BorderContainer id="virtual_link" width="15%" height="100%" backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+			<s:BorderContainer id="virtual_link" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
 				<!-- 虚拟链路信息列表-->
-				<mx:Label text="正在查看的虚拟请求的文件是:" x="10" y="10"/>
-				<mx:Label text="{vir_topName.text}" x="200" y="10"/>
-				<mx:DataGrid   width="1000" height="400" x="0" y="30" dataProvider="{virLinkInfo}">  
+				<mx:DataGrid   width="100%" height="100%" >  
 					<mx:columns>
 						<mx:DataGridColumn headerText="虚拟链路ID" dataField="vlink"/> 
 						<mx:DataGridColumn headerText="源节点ID" dataField="vfrom"/> 
@@ -595,7 +407,6 @@
 						<mx:DataGridColumn headerText="带宽" dataField="vboard"/> 
 					</mx:columns>					
 				</mx:DataGrid>
-				<mx:Button label="返回" height="40" width="100" x="780" y="440" id="myLinkSubmitButton" click="linkReturnClick(event);"/>
 				
 			</s:BorderContainer>
 			
