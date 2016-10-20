@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  xmlns:twaver="http://www.servasoftware.com/2009/twaver/flex"
+		  creationComplete="init();"
+		  width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" borderVisible="false">
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="fileupload" destination="fileUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedAlg" destination="embed" endpoint="messagebroker/amf"/>
+		
+		<!-- 下载是获取文件目录的远程对象-->
+		<s:RemoteObject id="fileDirHelper" destination="fileDirHelper" endpoint="messagebroker/amf"/> 	
+		<!-- 下载拓扑文件的远程对象-->
+		<s:RemoteObject id="fileDownLoad" destination="fileDownLoad" endpoint="messagebroker/amf"/> 
+		<!--拓扑生成的远程对象-->
+		<s:RemoteObject id="createtopo" destination="createTopo" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="routerwaxman" destination="routerWaxman" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="guigenConf" destination="guiGenConf" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="guigenGLPConf" destination="guiGenGLPConf" endpoint="messagebroker/amf"/>
+	</fx:Declarations>
+	
+	<!--
+	<fx:Script source="physicalNetView_as.as"/>
+	-->
+	
+	<fx:Script>
+		<![CDATA[
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			
+			import flexunit.utils.ArrayList;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import skin.buttonSkin;
+			
+			import twaver.network.Network;
+			
+			private var display:Boolean = true;
+			private var dividerFunc:DividerFunc = new DividerFunc();
+			private var phynodes:Array;
+			private var phylinks:Array;			
+			[Bindable] private var subNetXML:XML;
+			[Bindable]private var embededOutXML:XML;
+			private var mark:Boolean = true;//mark=true,表示是拓扑大小的设置，mark为false为节点数，链路数的设置
+			[Bindable] private var PhyNet:XML;
+			private var timer:Timer=new Timer(1000);
+			private var file:FileReference;//定义一个FileReference 进行文件的上传
+			
+			
+			private var downLoad_fileName:String;
+			
+			[Bindable]
+			public var subTopoFileName:ArrayCollection  = new ArrayCollection(
+				[  {"file_name": "sub10-15xy.xml"},
+					{"file_name":"sub20-30xy.xml" },
+					{"file_name":"sub30-50xy.xml" },
+					{"file_name":"phyNet.xml" }
+				]
+				
+			);//存储当前所有的物理拓扑文件文件名
+			
+			[Bindable]
+			public var embededFileName:ArrayCollection;//存储已经映射的结果文件的文件名
+			
+			public var big:int;
+			public var middle:int;
+			public var small:int;
+			[Bindable]
+			private var downLoadFile:ArrayCollection= new ArrayCollection();
+			
+			//初始化
+			private function init():void{
+				dividerFunc.dividerDoubleClick(hdb);
+				
+				file = new FileReference();      //用于文件上传的
+				file.addEventListener(Event.SELECT, onSelect);  
+				file.addEventListener(Event.COMPLETE, completeHandle);  
+				
+			}
+			
+			
+			//上传物理网络-start
+			private function uploadPhyNetwork():void{  
+				var xmlTypes:FileFilter  =  new FileFilter("XML文件 (*.xml)", "*.xml");
+				var allTypes:FileFilter  =  new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array  =  new Array(xmlTypes,allTypes);  
+				file.browse(array); 	
+				//******需要修改src中utils中的FileUpload中的路径
+			}
+			
+			private function completeHandle(event:Event):void  
+			{  
+				Alert.show("上传成功");  
+			}  
+			
+			private function onSelect(e:Event):void  
+			{  
+				Alert.show("上传 " + file.name + " (共 " + Math.round(file.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithUpload);  
+				subTopoFileName.addItem(file.name);
+				downLoadFile.addItem(file.name);
+		//		fileColl.addItem(file.name);
+			}  
+			
+			private function proceedWithUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest  =  new URLRequest("servlet/FileUpload");  
+					
+					try {  
+						file.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			//上传物理网-End
+			
+			//加载物理网络结束-end
+			
+			//拓扑生成部分的点击事件
+			private function topo_makeClick(event:MouseEvent):void{
+				topo_downLoad.visible = false;
+				topo_created.visible = true;		   
+				
+			}
+			
+			//Maxman拓扑生成类型
+			private function topoGenerated_Maxman():void{  
+				
+				Alert.show("zhangyanyan");
+				var nodeNum:int =int(nodesNum.text);
+				var cpuMinValue:Number =Number(cpuMin.text);
+				var cpuMaxValue:Number =Number(cpuMax.text);
+				var alpha :Number = Number(alphaValue.text);
+				var beta :Number = Number(betaValue.text);
+				var topofileName :String = String(topoFileName.text);
+				var typeOfFile : String = "generatedphy";
+				
+				//guigenGLPConf.MakeGLPConfFile(nodeNum, alpha, beta);
+				guigenConf.MakeConfFile("RT_Waxman",nodeNum,alpha, beta);	
+				//路径
+				createtopo.create("GUI_GEN.conf","D://flexW//fangzhen4//"+topofileName,topofileName,cpuMinValue,cpuMaxValue,typeOfFile,"seed_file");			
+			}
+			
+			//GLP拓扑生成类型
+			private function topoGenerated_GLP():void{  
+				
+				Alert.show("zhangyanyan");
+				var nodeNum:int =int(nodeNum.text);
+				var cpuMinValue:Number =Number(cpumin.text);
+				var cpuMaxValue:Number =Number(cpumax.text);
+				var p :Number = Number(pValue.text);
+				var beta :Number = Number(betavalue.text);
+				var topofileName :String = String(filename.text);
+				var typeOfFile : String = "generatedphy";
+				
+				//guigenGLPConf.MakeGLPConfFile(nodeNum, alpha, beta);
+				guigenConf.MakeConfFile("RT_GLP",nodeNum, p, beta);
+				//路径
+				createtopo.create("GUI_GEN.conf","D://flexW//fangzhen4//"+topofileName,topofileName,cpuMinValue,cpuMaxValue,typeOfFile,"D://flexW//fangzhen4//seed_file");			
+			}
+			
+			private function cancelClicked_Maxman():void{  
+				nodesNum.text = "";
+				cpuMin.text = "";
+				cpuMax.text = "";
+				alphaValue.text = "";
+				betaValue.text = "";
+				topoFileName.text = "";
+				//g.init();
+				//g.setVisible(true);			
+			}
+			
+			private function cancelClicked_GLP():void{  
+				
+				nodeNum.text = "";
+				cpumin.text = "";
+				cpumax.text = "";
+				pValue.text = "";
+				betavalue.text = "";
+				filename.text = "";
+				//g.init();
+				//g.setVisible(true);				
+			}
+			
+			//拓扑下载函数
+			private function downLoadPhyNetwork(event:MouseEvent):void{
+				topo_created.visible = false;
+				topo_downLoad.visible = true;
+				topo_downLoad_container.visible = true;
+				
+				//downLoadFile= new ArrayList();
+				//	Alert.show("...");
+				//路径
+				var path:String ="D://flexW//fangzhen4//flex_src//XML//phyNets";
+				fileDirHelper.addEventListener(ResultEvent.RESULT, fileresult);
+				fileDirHelper.getFileDectory(path);
+				
+				//	Alert.show("out");
+				
+			}
+			protected function fileresult(event:ResultEvent):void{
+				//downLoadFile= new ArrayList();
+				var temp:ArrayCollection = new ArrayCollection();
+				temp= event.result as ArrayCollection;
+				for each( var i : Object in temp){
+					var o:Object = new Object();
+					o.name = i.toString();
+					downLoadFile.addItem(o);					
+				}			
+				//Alert.show("1");
+				
+			}					
+			//展示映射结果
+//			protected function showEmbededOut(filename:String){
+//				var splitArray:Array = filename.split(".");
+//				//需要加载的映射结果文件
+//				var embedOutFile = "XML/embedOut/"+splitArray[0]+"-embed-out.xml";
+//				var request:URLRequest = new URLRequest(embedOutFile);
+//				var loader:URLLoader=new URLLoader(request);
+//				loader.dataFormat=URLLoaderDataFormat.TEXT;
+//				loader.addEventListener(Event.COMPLETE, loadEmbedOut);
+//			}
+//			
+//			protected function loadEmbedOut(event:Event){
+//				embededOutXML = XML(event.target.data);
+//				timer.start();
+//			}
+//			
+			//文件下载按钮
+			private var fileDown:FileReference ;//用于文件下载 
+			protected function file_download_clickHandler():void
+			{    
+				
+				//默认路径有text里面提供，然后转为后台下载
+				var path:String  = save_path.text;                 //文件的保存路径
+				var filePath:String = downLoad_fileName;     //要下载的文件的文件名
+				
+				//	var flag:Boolean = fileDownLoad.downLoadFile(downLoad_fileName,path);
+				var flag:Boolean = fileDownLoad.downLoadList(downLoadFileList,path);
+				if(flag){
+					Alert.show("下载成功");
+				}				
+			}
+			//Datagrid的点击事件，用于保存需要下载的文件
+			protected function dg_showFileList_itemClickHandler(event:ListEvent):void
+			{
+				//被选中的行是
+				//	Alert.show("被选中的行号是："+event.columnIndex);
+				//				Alert.show("文件名为："+
+				//					(event.target as DataGrid).selectedItem[(event.target as DataGrid).columns[event.columnIndex].dataField]
+				//				);
+				downLoad_fileName =(event.target as DataGrid).selectedItem[(event.target as DataGrid).columns[event.columnIndex].dataField];
+			}
+			
+			[Bindable]
+			private var downLoadFileList:ArrayCollection= new ArrayCollection();
+			protected function addFile_clickHandler(event:MouseEvent):void
+			{
+				downLoadFileList.addItem(downLoad_fileName);
+			}
+			
+			protected function removeFile_clickHandler(event:MouseEvent):void
+			{
+				downLoadFileList.removeItemAt(columnsNum);
+			}
+			private var columnsNum:int;
+			//要下载列表的文件列表中表项的点击事件
+			protected function dg_downLoadList_itemClickHandler(event:ListEvent):void
+			{
+				columnsNum = event.columnIndex;
+			}
+			
+		]]>
+	</fx:Script>
+	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false">
+		<mx:HDividedBox id="hdb" width="100%" height="100%">
+			<mx:VBox id="treeBox" width="20%" height="100%" minWidth="0" horizontalScrollPolicy="off" horizontalAlign="left" backgroundColor="#7094C9">
+				<mx:Box id="buttonBox" height="20%" width="100%" horizontalAlign="left" paddingTop="2" paddingBottom="2">
+					
+					<!-- 修改的部分-->
+					<s:Button label="拓扑生成" id="topo_make"  fontSize="15" height="100%"  width="100%"    skinClass="skin.buttonSkin" click="topo_makeClick(event)"/>
+					<s:Button label="拓扑上传" id="topo_upload" fontSize="15"  height="100%"  width="100%"   click="uploadPhyNetwork()" skinClass="skin.uploadbtnSkin" />		
+					<s:Button label="拓扑下载" id="topo_download" fontSize="15"  height="100%"  width="100%"   click="downLoadPhyNetwork(event)" skinClass="skin.buttonSkin" />		
+					
+				</mx:Box> 
+				<!--   按钮下方，左边的小显示区域-->	
+			</mx:VBox>
+			<!--  右边的大的显示区域 -->
+			<s:BorderContainer width="100%" height="100%" backgroundAlpha=".1" backgroundColor="#f1f1f1">
+				<!-- 拓扑生成界面  添加布局和相应的功能代码-->
+				<s:BorderContainer id="topo_created"  width="100%" height="100%" textJustify="interWord" 
+								   visible="true"
+								   backgroundColor="#f1f1f1">
+					
+					<mx:TabNavigator x="7" y="1" width="100%" height="100%">
+						<s:NavigatorContent label="GLP" width="100%" height="100%" id="GLPType" backgroundColor="#f1f1f1" skinClass="skin.bgImg">
+							<s:Label x="180" y="200" text="节点数：" width="63" fontSize="14" fontWeight="bold"/>
+							<s:Label x="180" y="270" text="p：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="180" y="340" text="beta：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="485" y="340" text="文件名：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="485" y="200" text="CPU能力的最小值：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="485" y="270" text="CPU能力的最大值：" fontSize="14" fontWeight="bold"/>
+							<s:Button x="370" y="450" label="拓扑生成" click="topoGenerated_GLP()" skinClass="skin.buttonStyle"/>
+							<s:Button x="587" y="450" label="取消" click="cancelClicked_GLP()" skinClass="skin.buttonReset"/>
+							<s:TextInput x="305" y="200" id="nodeNum"/>
+							<s:TextInput x="305" y="270" id="pValue"/>
+							<s:TextInput x="305" y="340" id="betavalue"/>
+							<s:TextInput x="640" y="340" id="filename"/>
+							<s:TextInput x="640" y="200" id="cpumin"/>
+							<s:TextInput x="640" y="270" id="cpumax"/>
+						</s:NavigatorContent>
+						<s:NavigatorContent label="Maxman" width="100%" height="100%" id="MaxmanType" backgroundColor="#f1f1f1" skinClass="skin.bgImg">
+							<s:Label x="180" y="200" text="节点数：" width="58" height="19" fontSize="14" fontWeight="bold"/>
+							<s:Label x="180" y="274" text="α：" width="52" fontSize="14" fontWeight="bold"/>
+							<s:Label x="180" y="333" text="β：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="485" y="340" text="文件名：" fontSize="14" fontWeight="bold"/>
+							<s:TextInput x="305" y="200" id="nodesNum"/>
+							<s:TextInput x="305" y="270" id="alphaValue"/>
+							<s:TextInput x="305" y="340" id="betaValue"/>
+							<s:TextInput x="640" y="340" id="topoFileName"/>
+							<s:Label x="485" y="200" text="CPU能力的最小值：" fontSize="14" fontWeight="bold"/>
+							<s:Label x="485" y="270" text="CPU能力的最大值：" fontSize="14" fontWeight="bold"/>
+							<s:TextInput x="640" y="200" id="cpuMin"/>
+							<s:TextInput x="640" y="270" id="cpuMax"/>
+							<s:Button x="370" y="450" label="拓扑生成" click="topoGenerated_Maxman()" id="topuGenerate" skinClass="skin.buttonStyle"/>
+							<s:Button x="587" y="450" label="取消" click="cancelClicked_Maxman()" skinClass="skin.buttonReset"/>
+						</s:NavigatorContent>
+					</mx:TabNavigator>
+				</s:BorderContainer>
+				<!-- 拓扑下载界面-->					
+				<s:BorderContainer id="topo_downLoad"  width="100%" height="100%" textJustify="interWord" 
+								   visible="false"
+								   backgroundColor="#f1f1f1" skinClass="skin.bgImg">	
+					<s:BorderContainer id="topo_downLoad_container" width="850" height="550" x="100" y="50" backgroundColor="#f1f1f1" visible="false" borderVisible="false" skinClass="skin.bgImg">
+						
+						<!-- 可以供下载的物理拓扑列表-->
+						<mx:DataGrid id="dg_showFileList" width="320" height="480" x="50" y="50"  dataProvider="{downLoadFile}" itemClick="dg_showFileList_itemClickHandler(event)" >   <!-- 用于显示文件列表信息 -->
+							<mx:columns>
+								<mx:DataGridColumn headerText="文件名" dataField="name"/> 
+							</mx:columns>					
+						</mx:DataGrid>
+						<!-- 选中要下载的物理拓扑列表-->
+						<mx:DataGrid id="dg_downLoadList" width="320" height="480" x="500" y="50"  dataProvider="{downLoadFileList}" itemClick="dg_downLoadList_itemClickHandler(event)" >   
+							<mx:columns>
+								<mx:DataGridColumn headerText="要下载的文件名" dataField="downLoadName"/> 
+							</mx:columns>					
+						</mx:DataGrid>	
+						
+						<s:Button id="addFile" label="添加" click="addFile_clickHandler(event)" x="400" y="230" skinClass="skin.buttonStyle"/>
+						<s:Button id="removeFile" label="移除" click="removeFile_clickHandler(event)" x="400" y="260" skinClass="skin.buttonReset"/>
+						
+						<s:Label  text="保存路径:" x="20" y="25" />
+						<s:TextInput id="save_path" width="200"  text="D:/flexW/" x="80" y="20"/>    <!-- 默认的下载路径-->
+						<s:Button id="file_download" label="开始下载" click="file_download_clickHandler()" x="300" y="18" skinClass="skin.buttonStyle"/>
+						
+						
+						
+					</s:BorderContainer>
+					
+				</s:BorderContainer>
+				
+			</s:BorderContainer>
+			
+			
+			
+		</mx:HDividedBox>
+	</s:BorderContainer>
+	
+</mx:VBox>

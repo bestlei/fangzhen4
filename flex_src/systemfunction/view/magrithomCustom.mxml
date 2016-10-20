@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" >
+	<fx:Script>
+		<![CDATA[
+			import skin.dropDownListSkin;
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="fileupload" destination="fileUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedAlg" destination="embed" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="jarupload" destination="jarUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="test" destination="test" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="dllupload" destination="dllUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedc" destination="embedC" endpoint="messagebroker/amf"/> 
+	</fx:Declarations>
+	
+	<!--
+	<fx:Script source="physicalNetView_as.as"/>
+	-->
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.binding.utils.BindingUtils;
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			import flash.net.FileReference;
+			import flash.utils.Timer;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.List;
+			import mx.events.CloseEvent;
+			import mx.events.DividerEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.remoting.RemoteObject;
+			
+			import skin.buttonSkin;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import twaver.Alarm;
+			import twaver.AlarmSeverity;
+			import twaver.Consts;
+			import twaver.ElementBox;
+			import twaver.IData;
+			import twaver.IElement;
+			import twaver.Link;
+			import twaver.Node;
+			import twaver.QuickFinder;
+			import twaver.Styles;
+			import twaver.network.Network;
+			
+			import mx.effects.easing.Bounce;
+			
+		
+			
+			private var display:Boolean = true;
+			private var dividerFunc:DividerFunc = new DividerFunc();
+			private var phynodes:Array;
+			private var phylinks:Array;			
+			[Bindable] private var subNetXML:XML;
+			[Bindable]private var embededOutXML:XML;
+			private var mark:Boolean = true;//mark=true,表示是拓扑大小的设置，mark为false为节点数，链路数的设置
+			[Bindable] private var PhyNet:XML;
+			private var timer:Timer=new Timer(1000);
+			private var file:FileReference;
+			private var jarFile:FileReference;//定义一个FileReference 进行文件的上
+			private var dllFile:FileReference;
+			
+			[Bindable]
+			public var subTopoFileName:ArrayCollection;//存储当前所有的物理拓扑文件文件名
+			
+			[Bindable]
+			public var embededFileName:ArrayCollection;//存储已经映射的结果文件的文件名
+			
+			//初始化
+			private function init():void{
+			
+				//timer.addEventListener(TimerEvent.TIMER, showVirtualNetwork);
+			
+				
+				file = new FileReference(); 
+				jarFile=new FileReference();
+				dllFile=new FileReference();
+				jarFile.addEventListener(Event.SELECT, onSelectJar);
+				jarFile.addEventListener(Event.COMPLETE, completeHandle); 
+				dllFile.addEventListener(Event.SELECT, onSelectdll); 
+				dllFile.addEventListener(Event.COMPLETE, completeHandle);
+				//file.addEventListener(ProgressEvent.PROGRESS, onProgress);  进度条
+				file.addEventListener(Event.SELECT, onSelect);  
+				file.addEventListener(Event.COMPLETE, completeHandle);  
+			}
+			
+			
+			
+			//上传物理网络-start
+			private function uploadPhyNetwork():void{  
+				var xmlTypes:FileFilter = new FileFilter("XML文件 (*.xml)", "*.xml");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(xmlTypes,allTypes);  
+				file.browse(array); 	
+			}
+			private function uploadDll():void{  
+				var xmlTypes:FileFilter = new FileFilter("dll文件 (*.dll)", "*.dll");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(xmlTypes,allTypes);  
+				dllFile.browse(array); 	
+			}
+			private function uploadJar():void{  
+				var jarTypes:FileFilter = new FileFilter("jar文件 (*.jar)", "*.jar");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(jarTypes,allTypes);  
+				jarFile.browse(array); 	
+			}
+			private function completeHandle(event:Event):void  
+			{  
+				Alert.show("上传成功");  
+			}  
+			
+			private function onSelect(e:Event):void  
+			{  
+				Alert.show("上传 " + file.name + " (共 " + Math.round(file.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithUpload);  
+			}  
+			private function onSelectJar(e:Event):void  
+			{  
+				Alert.show("上传 " + jarFile.name + " (共 " + Math.round(jarFile.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithJarUpload);  
+			}  
+			private function onSelectdll(e:Event):void  
+			{  
+				Alert.show("上传 " + dllFile.name + " (共 " + Math.round(dllFile.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithDllUpload);  
+			}  
+			
+			private function proceedWithUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/FileUpload");  
+					
+					try {  
+						file.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			//上传物理网-End
+			private function proceedWithJarUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/JarUpload");  
+					
+					try {  
+						jarFile.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			private function proceedWithDllUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/DllUpload");  
+					
+					try {  
+						dllFile.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			//加载物理网-start
+		
+			
+			protected function fileresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				
+			}
+			/*
+			protected function loadphy_changeHandler(event:IndexChangeEvent):void
+			{
+			var index:int = loadphy.selectedIndex;
+			var selectedFile:String = subTopoFileName[index].toString();
+			
+			phyNetwork.elementBox.clear();
+			phynodes = new Array();
+			phylinks = new Array();
+			var request:URLRequest = new URLRequest("XML/phyNets/" + selectedFile);
+			var loader:URLLoader = new URLLoader(request);
+			loader.dataFormat = URLLoaderDataFormat.TEXT;
+			loader.addEventListener(Event.COMPLETE,loadPhyNet);
+			}
+			*/
+			
+			
+			//加载物理网-END		
+			
+			
+			//开始依据选择的底层拓扑调用映射算法，并进行展示
+			
+			protected function loadphy_clickJarHandler(event:MouseEvent):void
+			{
+				
+				//				virNetSet.visible = false;
+				//				virNetSet.includeInLayout = false;
+				//				phyNetwork.visible = true;
+				//				phyNetwork.includeInLayout = true; 
+				
+				jarupload.addEventListener(ResultEvent.RESULT, jarresult);
+				jarupload.getFileName();
+				
+				
+			}
+			
+			protected function jarresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				
+			}
+			protected function loadphy_clickDllHandler(event:MouseEvent):void
+			{
+				
+				//				virNetSet.visible = false;
+				//				virNetSet.includeInLayout = false;
+				//				phyNetwork.visible = true;
+				//				phyNetwork.includeInLayout = true; 
+				
+				dllupload.addEventListener(ResultEvent.RESULT, dllresult);
+				dllupload.getFileName();
+				
+				
+			}
+			
+			protected function dllresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				
+			}
+			protected function processValues(selectedIndex:int,virNetDir:String,subNetDir:String):void{
+				var index:int = selectedIndex;
+				var selectedFile:String = subTopoFileName[index].toString();
+				test.embed(selectedFile,virNetDir,subNetDir);
+			}
+			protected function processValues2(selectedIndex:int,virNetDir:String,subNetDir:String):void{
+				var index:int = selectedIndex;
+				var selectedFile:String = subTopoFileName[index].toString();
+				embedc.embed(selectedFile,virNetDir,subNetDir);
+			}
+			
+			//展示映射结果
+			protected function showEmbededOut(filename:String){
+				var splitArray:Array = filename.split(".");
+				//需要加载的映射结果文件
+				var embedOutFile = "XML/embedOut/"+splitArray[0]+"-embed-out.xml";
+				var request:URLRequest = new URLRequest(embedOutFile);
+				var loader:URLLoader=new URLLoader(request);
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadEmbedOut);
+			}
+			
+			protected function loadEmbedOut(event:Event){
+				embededOutXML = XML(event.target.data);
+				timer.start();
+			}
+			
+			protected function algLoadUp(event:MouseEvent):void
+			{
+				//自定义算法上传部分函数
+				javaLoad.visible=true;
+				dllLoad.visible=true;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:BorderContainer id="javaLoad" height="400" width="400" x="50" y="120" cornerRadius="10" borderWeight="4" >
+		<mx:Panel title="上传Jar并运行" 		width="100%" height="100%" horizontalAlign="center" paddingTop="10"
+				  paddingBottom="10" paddingLeft="10" paddingRight="10">
+			<mx:TabNavigator id="tn" width="100%" height="100%" >
+				<mx:VBox label="上传Jar接口说明">
+					<mx:TextArea width="100%" height="100%" text="  上传的Jar包的入口类包名必须是embed，入口类名必须是Embed，入口函数必须是startEmbed，这个函数有两个参数，第一个参数是虚拟网请求文件所在的目录，第二个参数是物理网文件所在的目录。"/>
+				</mx:VBox>
+				<mx:VBox label="上传Jar">
+					<s:Button label="上传Jar" id="upAlgphy" width="100" height="40"  click="uploadJar()" />	
+					
+				</mx:VBox>
+				<mx:VBox label="选择Jar并运行">
+					<s:Form id="myForm" defaultButton="{mySubmitButton}">
+						<mx:FormItem label="虚拟网文件所在的目录">
+							<mx:TextInput id="virNetDir"/>
+						</mx:FormItem>
+						<mx:FormItem label="物理网文件所在的目录">
+							<mx:TextInput id="subNetDir"/>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:DropDownList id="algphy"  textAlign="center" prompt="加载Jar"   click="loadphy_clickJarHandler(event)" 
+											height="40" width="100"  dataProvider="{subTopoFileName}" />
+						</mx:FormItem>
+						<mx:FormItem>
+							<mx:Button label="提交" height="40" width="100" id="mySubmitButton" click="processValues(algphy.selectedIndex,virNetDir.text,subNetDir.text);"/>
+						</mx:FormItem>
+						
+					</s:Form>
+				</mx:VBox>
+			</mx:TabNavigator>
+		</mx:Panel>
+		
+	</s:BorderContainer>
+	
+	<s:BorderContainer id="dllLoad" height="400" width="400" x="500" y="120" cornerRadius="10" borderWeight="4">
+		<mx:Panel title="上传Dll并运行" 		width="100%" height="100%" horizontalAlign="center" paddingTop="10"
+				  paddingBottom="10" paddingLeft="10" paddingRight="10">
+			<mx:TabNavigator id="tn2" width="100%" height="100%" >
+				<mx:VBox label="上传Dll接口说明">
+					<mx:TextArea  width="100%" height="100%" text="  上传的Dll包的入口类包名必须是com，入口类名必须是EmbedC，入口函数必须是callEmbed，这个函数有两个参数，第一个参数是虚拟网请求文件所在的目录，第二个参数是物理网文件所在的目录。"/>
+				</mx:VBox>
+				<mx:VBox label="上传Dll">
+					<s:Button label="上传Dll" id="upDll"  height="40" width="100"   click="uploadDll()"  />		
+					
+				</mx:VBox>
+				<mx:VBox label="选择Dll并运行">
+					<s:Form id="myForm2" defaultButton="{mySubmitButton2}">
+						<mx:FormItem label="虚拟网文件所在的目录">
+							<mx:TextInput id="virNetDir2"/>
+						</mx:FormItem>
+						<mx:FormItem label="物理网文件所在的目录">
+							<mx:TextInput id="subNetDir2"/>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:DropDownList id="jarAlgphy"  textAlign="center" prompt="加载Dll" click="loadphy_clickDllHandler(event)" 
+											height="40" width="100"  dataProvider="{subTopoFileName}" />
+						</mx:FormItem>
+						<mx:FormItem>
+							<mx:Button label="提交" height="40" width="100" id="mySubmitButton2" click="processValues2(jarAlgphy.selectedIndex,virNetDir2.text,subNetDir2.text);"/>
+						</mx:FormItem>
+						
+					</s:Form>
+				</mx:VBox>
+			</mx:TabNavigator>
+		</mx:Panel>
+	</s:BorderContainer>
+</s:Group>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<menuitem label="主页">
+		<submenuitem label="平台开发环境简介" name="平台开发环境简介"  url="systemfunction.view.index"/>
+	</menuitem>
+	<menuitem label="拓扑管理">
+		<submenuitem label="拓扑文件管理" name="拓扑文件管理" url="systemfunction.view.topoFileManageView" />
+		<submenuitem label="拓扑查看" name="拓扑查看" url="systemfunction.view.topoCheckView"  />
+	</menuitem>
+	<menuitem label="映射管理">
+		<submenuitem label="网络映射关系仿真" name="网络映射关系仿真" url="systemfunction.view.mapRelation" />
+	</menuitem>
+	<menuitem label="网络状态管理">
+		<submenuitem label="网络状态仿真" name="网络状态仿真" />
+	</menuitem>
+</root>

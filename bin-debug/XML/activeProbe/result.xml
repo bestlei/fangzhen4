@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <subFauNode count="1">
+    <SFNode>15</SFNode>
+  </subFauNode>
+  <virFauNode count="0"/>
+  <virFauEdge count="3">
+    <VFEdge>32</VFEdge>
+    <VFEdge>35</VFEdge>
+    <VFEdge>46</VFEdge>
+  </virFauEdge>
+  <virDetecPro count="10">
+    <VDPath>2-3-9-12-F</VDPath>
+    <VDPath>7-10-14-F</VDPath>
+    <VDPath>2-4-8-F</VDPath>
+    <VDPath>2-5-18-F</VDPath>
+    <VDPath>12-13-17-F</VDPath>
+    <VDPath>1-3-12-16-F</VDPath>
+    <VDPath>2-6-11-F</VDPath>
+    <VDPath>2-9-19-F</VDPath>
+    <VDPath>3-12-15-F</VDPath>
+    <VDPath>0-12-14-F</VDPath>
+  </virDetecPro>
+</root>

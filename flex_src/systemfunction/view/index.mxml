@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:code="http://code.google.com/p/flexlib/" 
+			   creationComplete="init();"
+			   xmlns:flex="http://www.servasoftware.com/2009/twaver/flex"
+			   width="1526" height="100%">
+
+	<fx:Script>
+		<![CDATA[
+			import skin.buttonSkin;
+			protected function mainMenu_itemClickHandler(event:MenuEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<fx:XML source="license.xml" id="license"/>
+
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flexlib.controls.tabBarClasses.SuperTab;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.INavigatorContent;
+			import mx.core.UIComponent;
+			import mx.effects.Dissolve;
+			import mx.effects.Fade;
+			import mx.effects.Iris;
+			import mx.effects.WipeDown;
+			import mx.effects.WipeLeft;
+			import mx.effects.WipeRight;
+			import mx.effects.WipeUp;
+			import mx.effects.Zoom;
+			import mx.events.MenuEvent;
+			import mx.rpc.events.ResultEvent;
+			import spark.effects.Wipe;
+			import twaver.Utils;
+			
+			[Bindable]
+			private var mainMenuXML:XML;
+			
+			private function init():void{
+				var loader:URLLoader=new URLLoader(new URLRequest("menuDataProvider/mainMenu.xml?"+Math.random().toString()));
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadMenu);
+				tab.setClosePolicyForTab(0,SuperTab.CLOSE_NEVER);
+//				tab.invalidateDisplayList();
+				this.addEventListener(KeyboardEvent.KEY_DOWN,function(key:KeyboardEvent):void{
+					if(key.keyCode==9){
+						if(tab.selectedIndex < tab.length-1){
+							tab.selectedIndex++;
+						}else if(tab.selectedIndex==tab.length-1){
+							tab.selectedIndex=0;
+						}
+					}
+				});
+				initimg();
+			}
+			
+			private function loadMenu(event:Event):void{
+				this.mainMenuXML = XML(event.target.data);
+			}
+
+			
+			protected function menuClickHandler(event:MenuEvent):void{
+				trace("Debug!!!!!");
+				if(event.item.hasOwnProperty("@url")){
+					trace("url:"+event.item.hasOwnProperty("@url"));
+					trace("url test");
+					var menuClass:Class = getDefinitionByName(event.item.@url.toString()) as Class;
+					if(tab.getChildByName(event.item.@label.toString())==null){
+						var component:UIComponent = new menuClass();
+						component.name = event.item.@label.toString();
+		
+						if(component is topoCheckView){
+							//	Alert.show("click it");
+							var topocheck:topoCheckView = component as topoCheckView;
+							topocheck.label = event.item.@label.toString();
+							//  tab.addElement(component);
+							//  tab.selectedChild = tab.getChildByName(event.item.@label.toString()) as INavigatorContent;
+						}
+						
+						if(component is mapRelation){
+						//	Alert.show("click it");
+							var map:mapRelation = component as mapRelation;
+							map.label = event.item.@label.toString();
+							//  tab.addElement(component);
+							//  tab.selectedChild = tab.getChildByName(event.item.@label.toString()) as INavigatorContent;
+						}
+//						if(component is faultDetection){
+//							var fauDet:faultDetection = component as faultDetection;
+//							fauDet.label = event.item.@label.toString();
+//						}
+						if(component is topoFileManageView){
+							
+							var phyNet:topoFileManageView = component as topoFileManageView;
+							phyNet.label = event.item.@label.toString();
+							trace("ceshi : "+event.item.@label.toString());
+						}
+						//网络状态仿真
+						if(component is networkStatus){
+						      
+							  var status:networkStatus = component as networkStatus;
+						     status.label = event.item.@label.toString();
+						}
+						
+						if(component is faultDetection)
+						{
+							var detect:faultDetection = component as faultDetection;
+							detect.label = event.item.@label.toString();
+						}	
+
+						tab.addElement(component);//通过addElement函数将页面page2添加到tab中，在浏览器中显示
+					}
+					
+					//将当前页面的视图转换到新添加的child页面上
+					tab.selectedChild = tab.getChildByName(event.item.@label.toString()) as INavigatorContent;
+								
+				}
+			}
+               
+
+			protected function line1_activateHandler(event:Event):void
+			{
+				// TODO Auto-generated method stub
+			}
+			
+			//为首页添加广告翻页效果
+			[Bindable]
+			private var effects:ArrayCollection = new ArrayCollection();//效果集合
+			[Bindable]
+			private var effectIndex:int = 0;//应用效果的索引
+			private var pictures:ArrayCollection = new ArrayCollection();//图片集合
+			private var timer:Timer;//时间控件
+			private var tempInt:int = 0;//这个变量用来配合时间控件
+			private var indexTemp :int = 1;
+			/*初始化*/
+			private function initimg():void{
+			    //初始化效果集合
+				this.effects.addItem(new Dissolve);
+				this.effects.addItem(new Fade);
+				this.effects.addItem(new Iris);
+				this.effects.addItem(new Zoom);
+				this.effects.addItem(new WipeDown);
+				this.effects.addItem(new WipeUp);
+				this.effects.addItem(new WipeLeft);
+				this.effects.addItem(new WipeRight);
+				//初始化图片集合
+				this.pictures.addItem("Images/school1.png");
+				this.pictures.addItem("Images/school2.png");
+				this.pictures.addItem("Images/school3.png");
+				this.pictures.addItem("Images/school4.png");
+				//初始化时间空间
+				this.timer = new Timer(1*3000,0.0);
+				//添加时间控件计时事件
+				this.timer.addEventListener(TimerEvent.TIMER,onTimeTick);
+				//启动时间控件
+				this.timer.start();
+			}
+			private function onTimeTick(event:TimerEvent):void{
+				aero();
+			}
+			private function getRandNumber(min:Number,max:Number):Number{
+				var randNumber:Number = Math.floor(Math.random()*(max-min+1)+min);
+				return randNumber;
+			}
+			private function change(x:int):void{
+				switch(x)
+				{
+					case 1:
+					{
+						colorSet(lab1);
+						break;
+					}
+					case 2:
+					{
+						colorSet(lab2);
+						break;
+					}
+					case 3:
+					{
+						colorSet(lab3);
+						break;
+					}
+					case 4:
+					{
+						colorSet(lab4);
+						break;
+					}
+					default:
+					{
+						break;
+					}
+				}
+			}
+			private function colorSet(o:Label):void{
+				lab1.setStyle("color","black");
+				lab2.setStyle("color","black");
+				lab3.setStyle("color","black");
+				lab4.setStyle("color","black");
+				o.setStyle("color","red");
+			}
+			private function aero():void{
+				if(indexTemp>4)
+				{
+					indexTemp=1;
+				}
+				if(tempInt==0){
+					this.imageUp.source= "Images/school"+indexTemp+".png";
+					change(indexTemp);
+					indexTemp++;
+				}else{
+					this.effectIndex = getRandNumber(0,this.effects.length-1);
+					this.imageDowd.source= this.imageUp.source;
+				}
+				this.tempInt = (this.tempInt+1)%2;
+			}
+		]]>
+	</fx:Script>
+	
+  <s:BorderContainer bottom="0" borderVisible="false" backgroundColor="#E4E9D9"  id="body" width="1496" height="850" x="0">		 
+	      <s:BorderContainer width="100%" top="0" height="150" cornerRadius="5" backgroundImage="@Embed('Images/title/bg_top5.jpg')" borderVisible="false"  id="background_top">
+	      	<s:layout>
+	      		<s:BasicLayout/>
+	      	</s:layout>
+	                <s:Button y="110" right="100" width="30" height="30"  skinClass="skin.helpBtnSkin"/>
+				   <s:Button y="110" right="44" width="30" height="30"  skinClass="skin.shareBtnSkin"/>
+		 	 </s:BorderContainer>
+	  
+		<s:BorderContainer width="100%" top="150" height="50" cornerRadius="5" backgroundColor="#43484c" borderVisible="true" borderColor="#417eb7" >
+			<!-- 菜单栏 -->
+			<mx:MenuBar  width="100%" height="50"  id="mainMenu" showRoot="false" backgroundSkin="skin.MenuBarNoBorderFillSkin"
+						fontSize="20" labelField="@label" iconField="@icon" dataProvider="{mainMenuXML}"
+						itemClick="menuClickHandler(event)" itemDownSkin="skin.MenuBarActiveSkin"  itemOverSkin="skin.MenuBarActiveSkin" >
+				</mx:MenuBar>	
+		</s:BorderContainer >
+	  
+		<s:BorderContainer width="100%" top="200" height="100%"  cornerRadius="3" backgroundAlpha=".1" borderVisible="false" color="#E4E9D9">
+		<code:SuperTabNavigator id="tab" width="100%" height="650" tabHeight="30" 
+									fontSize="15" backgroundAlpha="0" paddingTop="0" borderVisible="false" y="0" color="black" backgroundColor="#417eb7" chromeColor="#CCCCCC">
+				
+		<s:NavigatorContent  label="主页"  fontSize="20" width="100%" height="100%"  id="indexPage" color="black" backgroundColor="#417eb7" backgroundAlpha="1.0">			
+					
+				<s:BorderContainer  width="100%" height="620"   backgroundColor="#f1f1f1" color="#E4E9D9" borderVisible="true">
+						<s:BorderContainer top="-3" width="100%" height="600" backgroundColor="#F1F1F1" skinClass="skin.bgImg">
+							<mx:Image id="imageDowd" width="980" height="600" source="./Images/school1.png" x="280" y="0"/>
+							<mx:Image id="imageUp" width="980" height="600" completeEffect="{this.effects.getItemAt(effectIndex)}" source="./Images/school1.png" x="280" y="0"/>
+							<s:Label id="lab1" x="670" y="580" click="{indexTemp=1;aero();}" text="1" color="#734929" fontWeight="bold" verticalAlign="middle"/>
+							<s:Label id="lab2" x="700" y="580" click="{indexTemp=2;aero();}" text="2" color="#734929" fontWeight="bold"/>
+							<s:Label id="lab3" x="730" y="580" click="{indexTemp=3;aero();}" text="3" color="#714929" fontWeight="bold"/>
+							<s:Label id="lab4" x="760" y="580" click="{indexTemp=4;aero();}" text="4" color="#714929" fontWeight="bold"/>
+						</s:BorderContainer>
+						<s:Label text="◎版权所有：北京邮电大学 网络技术研究院 网络管理研究中心"  color="#734929" fontSize="20" id="copyright" height="20" x="513" y="599">
+						</s:Label>
+                     					
+		
+				</s:BorderContainer>
+	    </s:NavigatorContent>				
+        </code:SuperTabNavigator>   
+		</s:BorderContainer>  
+	</s:BorderContainer>
+</s:Application>

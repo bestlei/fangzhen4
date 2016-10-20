@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="2" links="1">
+  <nodes>
+    <node label="0" x="75" y="93" CPU="1.448637"/>
+    <node label="1" x="17" y="84" CPU="1.224716"/>
+  </nodes>
+  <links>
+    <link label="0" fromNode="0" toNode="1" Bandwidth="58.694122"/>
+  </links>
+</root>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="10" links="15">
+  <nodes>
+    <node label="0" x="33" y="42" CPU="75.646620"/>
+    <node label="1" x="99" y="19" CPU="91.955612"/>
+    <node label="2" x="12" y="84" CPU="80.631992"/>
+    <node label="3" x="68" y="84" CPU="64.801581"/>
+    <node label="4" x="72" y="31" CPU="81.877613"/>
+    <node label="5" x="49" y="76" CPU="76.214360"/>
+    <node label="6" x="64" y="36" CPU="74.679149"/>
+    <node label="7" x="80" y="33" CPU="98.638751"/>
+    <node label="8" x="60" y="77" CPU="64.625839"/>
+    <node label="9" x="93" y="65" CPU="88.567885"/>
+  </nodes>
+  <links>
+    <link label="0" fromNode="0" toNode="1" Bandwidth="87.779042"/>
+    <link label="1" fromNode="0" toNode="2" Bandwidth="52.702879"/>
+    <link label="2" fromNode="0" toNode="3" Bandwidth="96.153456"/>
+    <link label="3" fromNode="1" toNode="5" Bandwidth="65.214273"/>
+    <link label="4" fromNode="2" toNode="7" Bandwidth="99.611423"/>
+    <link label="5" fromNode="3" toNode="9" Bandwidth="91.490415"/>
+    <link label="6" fromNode="4" toNode="8" Bandwidth="64.541433"/>
+    <link label="7" fromNode="4" toNode="0" Bandwidth="91.338471"/>
+    <link label="8" fromNode="6" toNode="9" Bandwidth="55.486634"/>
+    <link label="9" fromNode="6" toNode="8" Bandwidth="80.622100"/>
+    <link label="10" fromNode="7" toNode="1" Bandwidth="93.663567"/>
+    <link label="11" fromNode="8" toNode="9" Bandwidth="63.022242"/>
+    <link label="12" fromNode="9" toNode="7" Bandwidth="76.647992"/>
+    <link label="13" fromNode="9" toNode="5" Bandwidth="50.300239"/>
+    <link label="14" fromNode="5" toNode="7" Bandwidth="60.110639"/>
+  </links>
+</root>

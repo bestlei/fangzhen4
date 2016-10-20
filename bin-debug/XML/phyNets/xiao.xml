@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="12" links="11">
+  <nodes>
+    <node label="12" x="43" y="757" CPU="91.989441"/>
+    <node label="13" x="202" y="802" CPU="202.408081"/>
+    <node label="14" x="264" y="564" CPU="53.920422"/>
+    <node label="15" x="664" y="926" CPU="17.092453"/>
+    <node label="16" x="682" y="873" CPU="96.078331"/>
+    <node label="17" x="594" y="407" CPU="396.001404"/>
+    <node label="18" x="604" y="580" CPU="313.266571"/>
+    <node label="19" x="707" y="250" CPU="134.227722"/>
+    <node label="20" x="415" y="952" CPU="61.725872"/>
+    <node label="21" x="504" y="247" CPU="345.231323"/>
+    <node label="22" x="98" y="1" CPU="397.542908"/>
+    <node label="23" x="244" y="569" CPU="232.744293"/>
+  </nodes>
+  <links>
+    <link label="12" fromNode="12" toNode="13" Bandwidth="165.245272"/>
+    <link label="13" fromNode="14" toNode="13" Bandwidth="245.943083"/>
+    <link label="14" fromNode="15" toNode="13" Bandwidth="478.351335"/>
+    <link label="17" fromNode="18" toNode="13" Bandwidth="459.225435"/>
+    <link label="18" fromNode="19" toNode="13" Bandwidth="748.150386"/>
+    <link label="19" fromNode="20" toNode="13" Bandwidth="260.516794"/>
+    <link label="20" fromNode="16" toNode="13" Bandwidth="485.222629"/>
+    <link label="21" fromNode="21" toNode="13" Bandwidth="631.845709"/>
+    <link label="22" fromNode="22" toNode="13" Bandwidth="807.723344"/>
+    <link label="23" fromNode="23" toNode="13" Bandwidth="236.755148"/>
+    <link label="24" fromNode="13" toNode="17" Bandwidth="556.497080"/>
+  </links>
+</root>

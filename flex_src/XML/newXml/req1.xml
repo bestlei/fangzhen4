@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="6" links="5">
+  <nodes>
+    <node CPU="0.053818"/>
+    <node CPU="0.001665"/>
+    <node CPU="0.093152"/>
+    <node CPU="0.034755"/>
+    <node CPU="0.020571"/>
+    <node CPU="0.052263"/>
+  </nodes>
+  <links>
+    <link fromNode="0" toNode="5" Bandwidth="40.098535"/>
+    <link fromNode="1" toNode="5" Bandwidth="30.716835"/>
+    <link fromNode="2" toNode="5" Bandwidth="67.990375"/>
+    <link fromNode="3" toNode="5" Bandwidth="64.513396"/>
+    <link fromNode="4" toNode="5" Bandwidth="44.333886"/>
+  </links>
+</root>

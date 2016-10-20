@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <VN label="0">
+    <nodes>
+      <node label="0" x="68" y="84" toNode="3"/>
+      <node label="1" x="72" y="31" toNode="4"/>
+      <node label="2" x="49" y="76" toNode="5"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="35" toNode="36" BandwidthNeed="33.941125">
+        <linkmap toLink="1"/>
+      </link>
+      <link label="1" fromNode="37" toNode="36" BandwidthNeed="42.638011">
+        <linkmap toLink="0"/>
+      </link>
+    </links>
+    <bw needed="76.579136" cost="76.579136" cost-needed="1.000000"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="0"/>
+    </alarms>
+  </VN>
+  <VN label="1">
+    <nodes>
+      <node label="0" x="12" y="84" toNode="2"/>
+      <node label="1" x="72" y="31" toNode="4"/>
+      <node label="2" x="49" y="76" toNode="5"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="35" toNode="36" BandwidthNeed="33.941125">
+        <linkmap toLink="2"/>
+      </link>
+      <link label="1" fromNode="37" toNode="36" BandwidthNeed="42.638011">
+        <linkmap toLink="0"/>
+      </link>
+    </links>
+    <bw needed="76.579136" cost="76.579136" cost-needed="1.000000"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="1">
+        <alarmLink label="0" utilization="0.9714849929667722"/>
+      </alarmLinks>
+    </alarms>
+  </VN>
+  <VN label="2">
+    <nodes>
+      <node label="0" x="99" y="19" toNode="1"/>
+      <node label="1" x="12" y="84" toNode="2"/>
+      <node label="2" x="72" y="31" toNode="4"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="35" toNode="36" BandwidthNeed="33.941125">
+        <linkmap toLink="5"/>
+      </link>
+      <link label="1" fromNode="37" toNode="36" BandwidthNeed="42.638011">
+        <linkmap toLink="2"/>
+      </link>
+    </links>
+    <bw needed="76.579136" cost="76.579136" cost-needed="1.000000"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="1">
+        <alarmLink label="0" utilization="0.9714849929667722"/>
+      </alarmLinks>
+    </alarms>
+  </VN>
+  <vnLeaves reqId="0"/>
+  <vnLeaves reqId="1"/>
+  <vnLeaves reqId="2"/>
+  <Evaluation Arrived="3" SuccessNum="3" FailNum="0" AcceptRate="1.0" Revenue="349.97274" Cost="349.97274" CR="1.0">
+    <failVN/>
+  </Evaluation>
+</root>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx">
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("spark.components.BorderContainer")]
+	</fx:Metadata>
+	<s:layout>
+		<s:BasicLayout/>
+		</s:layout>
+	<!-- states -->
+	<s:states>
+		<s:State name="disabled" />
+		<s:State name="normal" />
+	</s:states>
+	<s:layout.disabled>
+		<s:ConstraintLayout/>
+	</s:layout.disabled>
+	
+	<s:BitmapImage id="bgimg" source="@Embed('bg4.png')" smooth="true" width="171" height="77" left="0" right="0" top="0" bottom="0" left.normal="0" right.normal="0" top.normal="0" bottom.normal="0"/>
+	<s:Group id="contentGroup" left="0" right="0" top="0" bottom="0"/>
+	<!-- SkinParts
+	name=contentGroup, type=spark.components.Group, required=false
+	name=contentGroup, type=spark.components.Group, required=false
+	-->
+</s:Skin>

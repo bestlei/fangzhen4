@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <nodes>
+    <node id="0" cpu="75.64662" utilization="0.0"/>
+    <node id="1" cpu="72.981567" utilization="0.20633918"/>
+    <node id="2" cpu="47.2452" utilization="0.41406384"/>
+    <node id="3" cpu="45.827535999999995" utilization="0.29280218"/>
+    <node id="4" cpu="46.36046700000001" utilization="0.43378335"/>
+    <node id="5" cpu="62.831056" utilization="0.17560081"/>
+    <node id="6" cpu="74.679149" utilization="0.0"/>
+    <node id="7" cpu="98.638751" utilization="0.0"/>
+    <node id="8" cpu="64.625839" utilization="0.0"/>
+    <node id="9" cpu="88.567885" utilization="0.0"/>
+  </nodes>
+</root>

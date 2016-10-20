@@ -1,0 +1,6 @@
+PLACES 16911 54940 2170167	# used when placing nodes on the plane
+CONNECT 573290 290006 570695	# used when interconnecting nodes
+EDGE_CONN 919977 200611 969588	# used in the edge connection method of top down hier
+GROUPING -24305 670945 735358	# used when deciding which routers to group into an AS in bottom up hier
+ASSIGNMENT -78013 831927 78400948	# used when deciding how many routers to group into an AS in bottom up hier
+BANDWIDTH -26226 075380 87868082	# used when assigning bandwidths

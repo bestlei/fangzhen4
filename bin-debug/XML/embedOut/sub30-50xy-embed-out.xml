@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <VN label="0">
+    <nodes>
+      <node label="0" x="55" y="75" toNode="4"/>
+      <node label="1" x="5" y="93" toNode="0"/>
+      <node label="2" x="75" y="7" toNode="6"/>
+      <node label="3" x="45" y="62" toNode="22"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="0" toNode="3" BandwidthNeed="40.237877">
+        <linkmap toLink="8"/>
+      </link>
+      <link label="1" fromNode="1" toNode="3" BandwidthNeed="56.078451">
+        <linkmap toLink="0"/>
+      </link>
+      <link label="2" fromNode="2" toNode="3" BandwidthNeed="55.444816">
+        <linkmap toLink="16"/>
+      </link>
+    </links>
+    <bw needed="151.761144" cost="151.761144" cost-needed="1.000000"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="0"/>
+    </alarms>
+  </VN>
+  <vnLeaves reqId="0"/>
+  <Evaluation Arrived="1" SuccessNum="1" FailNum="0" AcceptRate="1.0" Revenue="151.992599" Cost="151.992599" CR="1.0">
+    <failVN/>
+  </Evaluation>
+</root>

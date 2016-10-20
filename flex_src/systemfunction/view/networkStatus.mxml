@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  xmlns:twaver="http://www.servasoftware.com/2009/twaver/flex"
+		  creationComplete="init();"
+		  width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" borderVisible="false">
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="fileupload" destination="fileUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedAlg" destination="embed" endpoint="messagebroker/amf"/>
+		
+		<!-- 下载是获取文件目录的远程对象-->
+		<s:RemoteObject id="fileDirHelper" destination="fileDirHelper" endpoint="messagebroker/amf"/> 	
+		<!-- 下载拓扑文件的远程对象-->
+		<s:RemoteObject id="fileDownLoad" destination="fileDownLoad" endpoint="messagebroker/amf"/> 
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			
+			import flexunit.utils.ArrayList;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import skin.buttonSkin;
+			
+			import twaver.network.Network;
+			
+			private var display:Boolean = true;
+			private var dividerFunc:DividerFunc = new DividerFunc();
+			private var phynodes:Array;
+			private var phylinks:Array;			
+			[Bindable] private var subNetXML:XML;
+			[Bindable]private var embededOutXML:XML;
+			private var mark:Boolean = true;//mark=true,表示是拓扑大小的设置，mark为false为节点数，链路数的设置
+			[Bindable] private var PhyNet:XML;
+			private var timer:Timer=new Timer(1000);
+			private var file:FileReference;//定义一个FileReference 进行文件的上传
+			
+			
+			private var downLoadFile:ArrayCollection= new ArrayCollection();
+			[Bindable] public var treeData:ArrayCollection=new ArrayCollection();
+			
+			//展示数据所需要的arrayCollection
+			[Bindable] var subNodeInfo:ArrayCollection ;
+			[Bindable] var subLinkInfo:ArrayCollection ;
+			[Bindable] var virNodeInfo:ArrayCollection ;
+			[Bindable] var virLinkInfo:ArrayCollection ;
+			[Bindable]var nodealarmInfo:ArrayCollection;
+			[Bindable]var linkalarmInfo:ArrayCollection;
+			
+			
+			//初始化
+			private function init():void{			
+				treeData.addItem({title:"wuliwang",children:[
+					{title:"物理节点"},
+					{title:"物理链路"}					
+				]});
+				treeData.addItem({title:"虚拟网络信息",children:[
+					{title:"虚拟请求1"},
+					{title:"虚拟请求2"},
+					{title:"虚拟请求3"}			
+				]});
+			}
+						
+			private function tree_change(event:Event):void{ 
+				var str:String=tree.selectedItem.@label; 
+				if(str=="物理节点信息"){
+					physical_node.width=1000;
+					physical_node.height=480;
+					physical_link.width=0;
+					physical_link.height=0;
+					virtual_node.width=0;
+					virtual_node.height=0;
+					virtual_link.width=0;
+					virtual_link.height=0;
+					alarmnode_info.width=0;
+					alarmnode_info.height=0;
+					alarmnode_info.visible=false;
+					
+				//	alarmlink_info.width=0;
+				//	alarmlink_info.height=0;
+				//	alarmlink_info.visible=false;
+					
+					physical_node.visible=true;
+					physical_link.visible=false;
+					virtual_node.visible=false;
+					virtual_link.visible=false;
+					
+					//加载物理网络信息
+					loadSubNetInfo(mapRelation.subTopoName);
+					
+				}else if(str=="物理链路信息"){
+					physical_node.width=0;
+					physical_node.height=0;
+					physical_link.width=1000;
+					physical_link.height=480;
+					virtual_node.width=0;
+					virtual_node.height=0;
+					virtual_link.width=0;
+					virtual_link.height=0;
+					alarmnode_info.width=0;
+					alarmnode_info.height=0;
+					alarmnode_info.visible=false;
+					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
+					
+					physical_node.visible=false;
+					physical_link.visible=true;
+					virtual_node.visible=false;
+					virtual_link.visible=false;
+					
+					//加载物理链路信息
+					loadSubLinkInfo(mapRelation.subTopoName);				
+				}else if(str=="虚拟节点信息"){
+					physical_node.width=0;
+					physical_node.height=0;
+					physical_link.width=0;
+					physical_link.height=0;
+					virtual_node.width=1000;
+					virtual_node.height=480;
+					virtual_link.width=0;
+					virtual_link.height=0;
+					alarmnode_info.width=0;
+					alarmnode_info.height=0;
+					alarmnode_info.visible=false;
+					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
+					physical_node.visible=false;
+					physical_link.visible=false;
+					virtual_node.visible=true;
+					virtual_link.visible=false;
+				}else if(str=="虚拟链路信息"){
+					physical_node.width=0;
+					physical_node.height=0;
+					physical_link.width=0;
+					physical_link.height=0;
+					virtual_node.width=0;
+					virtual_node.height=0;
+					virtual_link.width=1000;
+					virtual_link.height=480;
+					alarmnode_info.width=0;
+					alarmnode_info.height=0;
+					alarmnode_info.visible=false;
+//					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
+					physical_node.visible=false;
+					physical_link.visible=false;
+					virtual_node.visible=false;
+					virtual_link.visible=true;
+				}else if(str=="告警信息详情"){
+					physical_node.width=0;
+					physical_node.height=0;
+					physical_link.width=0;
+					physical_link.height=0;
+					virtual_node.width=0;
+					virtual_node.height=0;
+					virtual_link.width=0;
+					virtual_link.height=0;
+					alarmnode_info.width=1000;
+					alarmnode_info.height=480;
+					alarmnode_info.visible=true;
+					
+//					alarmlink_info.width=0;
+//					alarmlink_info.height=0;
+//					alarmlink_info.visible=false;
+					
+					physical_node.visible=false;
+					physical_link.visible=false;
+					virtual_node.visible=false;
+					virtual_link.visible=false;
+					
+					//解析告警信息
+					loadAlarmInfo();
+		//			Alert.show("开始解析告警信息。",Alert.OK|Alert.CANCEL);
+				
+					
+					
+				}
+			} 
+			[Bindable]private var subnodeXML:XML;
+			//传入选中的文件名，进行解析，加载物理节点信息
+			public function loadSubNetInfo(topoName:String)
+			{
+				var filePath:String  = "XML/utilization/subnodeUtil.xml";           //需要修改路径的
+				var request:URLRequest = new URLRequest(filePath);
+				var loader:URLLoader=new URLLoader(request);
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadEmbedOut);				
+			}
+			protected function loadEmbedOut(event:Event){
+				subnodeXML = XML(event.target.data);
+				var nodes:int = subnodeXML.nodes.node.length();
+				
+			//	var links:int = subTopoXML.links.link.length();
+				Alert.show("nodes =" +nodes);
+				//加载物理节点信息
+				var subTopoResult:Array = new Array();
+				var i:int = 0;				
+				for( i = 0; i < nodes; i++)
+				{
+					subTopoResult[i] ={pnode:i ,pcpu:subnodeXML.nodes.node[i].@cpu, pcpuUtil: subnodeXML.nodes.node[i].@utilization};
+				}
+				subNodeInfo  = new ArrayCollection(subTopoResult);	
+				
+			}
+			
+			//加载物理链路信息
+			[Bindable]private var sublinkXML:XML;
+			public function loadSubLinkInfo(topoName:String)
+			{
+				var filePath:String  = "XML/utilization/sublinkUtil.xml";           //需要修改路径的
+				var request:URLRequest = new URLRequest(filePath);
+				var loader:URLLoader=new URLLoader(request);
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadLinkOut);				
+			}
+			protected function loadLinkOut(event:Event){
+				sublinkXML = XML(event.target.data);
+				var links:int = sublinkXML.links.link.length();
+				
+				//	var links:int = subTopoXML.links.link.length();
+				Alert.show("links =" +links);
+				//加载物理节点信息
+				
+				//加载物理链路信息
+				var subTopoLink:Array = new Array();
+				var i:int = 0;
+				for(i = 0; i < links; i++)
+				{
+					subTopoLink[i] = {plink:i, pfrom:sublinkXML.links.link[i].@ linkFrom, pto:sublinkXML.links.link[i].@ linkTo,
+						ppboard:sublinkXML.links.link[i].@ bw,  boardUtil:sublinkXML.links.link[i].@ utilization};
+				}
+				subLinkInfo = new ArrayCollection(subTopoLink);
+			}
+			
+			//告警的xml文件
+			[Bindable]private var alarmXML:XML;
+			private var hadLinkAlarm:Boolean = true;
+			public function loadAlarmInfo()
+			{
+				var filePath:String  = "XML/alarm/alarmOut.xml";           //需要修改路径的
+				var request:URLRequest = new URLRequest(filePath);
+				var loader:URLLoader=new URLLoader(request);
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadAlarmOut);			
+		//		Alert.show("000",Alert.OK|Alert.CANCEL);
+							
+			}
+			protected function loadAlarmOut(event:Event){
+		//		Alert.show("111",Alert.OK|Alert.CANCEL);
+				alarmXML = XML(event.target.data);
+				var alarmnodes:int = alarmXML.nodeAlarms.nodeAlarm.length();
+				var alarmlinks:int = alarmXML.linkAlarms.linkAlarm.length();
+				Alert.show("alarmnodes："+alarmnodes+",alarmLinks："+alarmlinks,Alert.OK|Alert.CANCEL);
+				
+				//加载物理节点信息
+				var alarmResult:Array = new Array();
+				var i:int = 0;		
+				//告警ID、告警源、告警类型、告警详情
+				if(alarmnodes > 0 && alarmlinks > 0)
+				{
+					for( i = 0; i < alarmnodes; i++)
+					{
+						alarmResult[i] ={
+							alarmID:"Alarm00"+i,
+							alarmNodeId:"节点告警：node" + alarmXML.nodeAlarms.nodeAlarm[i].@nodeId ,
+							alarmNodeType:"利用率越限告警",
+							alarmNodeUtil:"节点CPU利用率为："+ alarmXML.nodeAlarms.nodeAlarm[i].@utilization
+						};
+					}
+					
+					for(i = 0; i < alarmlinks; i++)
+					{
+						alarmResult[i+alarmnodes] = {alarmID:"Alarm00"+(i + alarmnodes) , 
+							alarmNodeId:"链路告警：link（"+alarmXML.linkAlarms.linkAlarm[i].@linkFrom +"--"+alarmXML.linkAlarms.linkAlarm[i].@linkTo +"）",
+							alarmNodeType:"利用率越限告警",
+							alarmNodeUtil: "链路的带宽利用率为："+alarmXML.linkAlarms.linkAlarm[i].@utilization};
+						
+					}
+									
+					nodealarmInfo  = new ArrayCollection(alarmResult);				
+				}else{
+				  Alert.show("当前告警信息！",Alert.OK|Alert.CANCEL);
+				}
+				
+				/*
+				//加载物理链路信息
+				if(alarmlinks > 0)
+				{
+					var linkAlarm:Array = new Array();
+					for(i = 0; i < alarmlinks; i++)
+					{
+						linkAlarm[i] = {alarmID:i,alarmName:alarmXML.linkAlarms.linkAlarm[i].@name,alarmFrom:alarmXML.linkAlarms.linkAlarm[i].@linkFrom,
+							                                  alarmTo:alarmXML.linkAlarms.linkAlarm[i].@linkTo, alarmUtill:alarmXML.linkAlarms.linkAlarm[i].@utilization};
+							
+					}
+					linkalarmInfo = new ArrayCollection(linkAlarm);
+				}else{
+					hadLinkAlarm = false;   
+				
+				}
+				
+				*/
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false" skinClass="skin.bgImg">
+		<mx:HDividedBox id="hdb" width="100%" height="100%">
+			<mx:VBox id="treeBox" width="20%" height="100%" minWidth="0" horizontalScrollPolicy="off" horizontalAlign="left" backgroundColor="#7094C9">
+				<mx:Box id="buttonBox"  horizontalAlign="left" paddingTop="2" paddingBottom="2" backgroundColor="#7094C9" width="100%" height="13.2%">
+					<!-- 修改的部分-->
+					<mx:Tree  id="tree" labelField="@label"  
+							  change="tree_change(event)" fontSize="20" width="227"  height="740" contentBackgroundColor="#7094C9"
+							  folderClosedIcon="@Embed(source='Images/button/bird.png')"
+							  folderOpenIcon="@Embed(source='Images/button/bird.png')"
+							  defaultLeafIcon="@Embed(source='Images/button/bird.png')"> 
+						
+						<mx:dataProvider> 
+							<fx:XMLList> 
+								<province label="物理网络信息"> 
+									<city label="物理节点信息"/> 
+									<city label="物理链路信息"/> 
+								</province> 
+								<province label="虚拟网络信息"> 
+									<city label="虚拟节点信息"/> 
+									<city label="虚拟链路信息"/> 
+								</province> 
+								<province label="告警信息"> 
+									<city label="告警信息详情"/>  
+								</province> 
+							</fx:XMLList> 
+						</mx:dataProvider> 
+						
+					</mx:Tree> 
+				</mx:Box>
+				
+				<!--   按钮下方，左边的小显示区域-->	
+				<s:BorderContainer top="50%" height="100%" width="100%" backgroundAlpha=".1">
+					<twaver:Network id="virtualNetwork" left="-6" top="2" width="100%" height="100%" backgroundAlpha="0">
+					</twaver:Network>
+					<mx:Label horizontalCenter="center" textAlign="center"  id="ll" color="red" />
+				</s:BorderContainer>
+			</mx:VBox>
+			<!--  右边的大的显示区域 -->
+			<s:BorderContainer  id="physical_node" width="20%" height="100%" backgroundAlpha=".1" backgroundColor="#f1f1f1" visible="false" >
+				<!-- 物理节点信息列表-->
+				<mx:DataGrid  width="100%" height="100%" dataProvider="{subNodeInfo}"> 
+					<mx:columns>
+						<mx:DataGridColumn headerText="物理节点ID" dataField="pnode"/> 
+						<mx:DataGridColumn headerText="CPU" dataField="pcpu"/> 
+						<mx:DataGridColumn headerText="CPU利用率" dataField="pcpuUtil"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+			</s:BorderContainer>
+			<s:BorderContainer  width="15%" height="100%" id="physical_link" backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+				<!-- 物理链路信息列表-->
+				<mx:DataGrid   width="100%" height="100%"  dataProvider="{subLinkInfo}">  
+					<mx:columns>
+						<mx:DataGridColumn headerText="物理链路ID" dataField="plink"/> 
+						<mx:DataGridColumn headerText="源节点" dataField="pfrom"/> 
+						<mx:DataGridColumn headerText="目的节点" dataField="pto"/> 
+						<mx:DataGridColumn headerText="带宽" dataField="ppboard"/> 
+						<mx:DataGridColumn headerText="带宽利用率" dataField="boardUtil"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+			</s:BorderContainer>
+			<s:BorderContainer  id="virtual_node" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+				<!-- 虚拟节点信息列表-->
+				<mx:DataGrid    width="100%" height="100%" >   
+					<mx:columns>
+						<mx:DataGridColumn headerText="虚拟节点ID" dataField="vnode"/> 
+						<mx:DataGridColumn headerText="CPU" dataField="vcpu"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+			</s:BorderContainer>
+			<s:BorderContainer id="virtual_link" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+				<!-- 虚拟链路信息列表-->
+				<mx:DataGrid   width="100%" height="100%" >  
+					<mx:columns>
+						<mx:DataGridColumn headerText="虚拟链路ID" dataField="vlink"/> 
+						<mx:DataGridColumn headerText="源节点ID" dataField="vfrom"/> 
+						<mx:DataGridColumn headerText="目的节点ID" dataField="vto"/> 
+						<mx:DataGridColumn headerText="带宽" dataField="vboard"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+				
+			</s:BorderContainer>
+			
+			<s:BorderContainer id="alarmnode_info" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+				<mx:DataGrid   width="100%" height="100%"  dataProvider="{nodealarmInfo}">   <!-- 用于显示文件列表信息 -->
+					<mx:columns>
+						<mx:DataGridColumn headerText="告警ID" dataField="alarmID"/> 
+						<mx:DataGridColumn headerText="告警源" dataField="alarmNodeId"/> 			
+						
+						<mx:DataGridColumn headerText="告警类型" dataField="alarmNodeType"/> 
+						<mx:DataGridColumn headerText="告警详情" dataField="alarmNodeUtil"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+				
+			</s:BorderContainer>
+			<!--
+			<s:BorderContainer id="alarmlink_info" width="15%" height="100%"  backgroundAlpha=".1" backgroundColor="#f1f1f1"  visible="false">
+				<mx:DataGrid   width="100%" height="100%"  dataProvider="{linkalarmInfo}" >   
+					<mx:columns>
+						<mx:DataGridColumn headerText="链路告警信息ID" dataField="alarmID"/> 
+						<mx:DataGridColumn headerText="链路告警名称" dataField="alarmName"/> 
+						<mx:DataGridColumn headerText="链路起点" dataField="alarmFrom"/> 						
+						<mx:DataGridColumn headerText="链路终点" dataField="alarmTo"/> 
+						<mx:DataGridColumn headerText="链路利用率" dataField="alarmUtill"/> 
+					</mx:columns>					
+				</mx:DataGrid>
+				
+			</s:BorderContainer>
+			-->
+		</mx:HDividedBox>
+	</s:BorderContainer>
+	
+	
+	
+</mx:VBox>
+

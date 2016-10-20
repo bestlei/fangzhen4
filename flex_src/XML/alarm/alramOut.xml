@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<alrams>
+  <nodeAlarms/>
+  <linkAlarms>
+    <linkAlarm id="0" name="告警0" type="linkAlarm" linkFrom="0" linkTo="1" utilization="0.9714849929667722"/>
+  </linkAlarms>
+</alrams>

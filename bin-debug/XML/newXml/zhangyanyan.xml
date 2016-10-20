@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="4" links="3">
+  <nodes>
+    <node CPU="1.455243"/>
+    <node CPU="1.676743"/>
+    <node CPU="1.615441"/>
+    <node CPU="1.140558"/>
+  </nodes>
+  <links>
+    <link fromNode="0" toNode="1" Bandwidth="17.088007"/>
+    <link fromNode="2" toNode="1" Bandwidth="80.156098"/>
+    <link fromNode="3" toNode="1" Bandwidth="10.816654"/>
+  </links>
+</root>

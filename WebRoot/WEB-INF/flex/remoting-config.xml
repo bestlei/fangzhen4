@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service id="remoting-service" 
+    class="flex.messaging.services.RemotingService">
+
+    <adapters>
+        <adapter-definition id="java-object" class="flex.messaging.services.remoting.adapters.JavaAdapter" default="true"/>
+    </adapters>
+
+    <default-channels>
+        <channel ref="my-amf"/>
+    </default-channels>
+	
+	<destination id="fileUpload">
+		<properties>
+			<source>utils.FileUpload</source>
+		</properties>
+    </destination>
+	<destination id="embed">
+		<properties>
+			<source>embed.Embed</source>
+		</properties>
+    </destination>
+    
+    <destination id="getPath">
+		<properties>
+			<source>utils.AllPath</source>
+		</properties>
+    </destination>
+    <destination id="activeProbe">
+		<properties>
+			<source>activeprobe.diagnosis.MainClass</source>
+		</properties>
+    </destination>
+	<destination id="prosubFileUpload">
+		<properties>
+			<source>utils.FileUpload1</source>
+		</properties>
+    </destination>
+    <destination id="probeVNLoad">
+		<properties>
+			<source>utils.FileUpload2</source>
+		</properties>
+    </destination>
+     <destination id="probeMapLoad">
+		<properties>
+			<source>utils.FileUpload3</source>
+		</properties>
+    </destination>
+    
+      <destination id="fileDirHelper">
+		<properties>
+			<source>utils.FileDictoryHelper</source>
+		</properties>
+    </destination>
+    
+     <destination id="fileDownLoad">
+		<properties>
+			<source>utils.FileDownLoad</source>
+		</properties>
+    </destination>
+    
+     <destination id="fileListHelper">
+		<properties>
+			<source>utils.GetFileDictory</source>
+		</properties>
+    </destination>
+     <destination id="createTopo">
+		<properties>
+			<source>brite.Main.Brite</source>
+		</properties>
+    </destination>
+    <destination id="routerWaxman">
+		<properties>
+			<source>brite.Model.RouterWaxman</source>
+		</properties>
+    </destination>
+    <destination id="guiGenConf">
+		<properties>
+			<source>brite.Main.Gui_GenConf</source>
+		</properties>
+    </destination>
+    <destination id="guiGenGLPConf">
+		<properties>
+			<source>brite.Main.Gui_GenGLPConf</source>
+		</properties>
+    </destination>
+     <destination id="faultGenerate">
+        <properties>
+            <source>activeprobe.diagnosis.MainClass</source>
+        </properties>
+    </destination>
+	<destination id="faultDetect">
+        <properties>
+            <source>activeprobe.diagnosis.JavaMat</source>
+        </properties>
+    </destination>
+	<destination id="saxXmlUtil">
+		<properties>
+			<source>utils.SAXxmlUtil</source>
+		</properties>
+    </destination>
+    <destination id="dllUpload">
+		<properties>
+			<source>com.DllUpload</source>
+		</properties>
+    </destination>
+    <destination id="jarUpload">
+		<properties>
+			<source>com.JarUpLoad</source>
+		</properties>
+    </destination>
+      <destination id="embedC">
+		<properties>
+			<source>com.EmbedC</source>
+		</properties>
+    </destination>
+     <destination id="test">
+		<properties>
+			<source>com.Test</source>
+		</properties>
+    </destination>
+</service>

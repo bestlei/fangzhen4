@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="9" links="8">
+  <nodes>
+    <node CPU="0.02749"/>
+    <node CPU="0.023932"/>
+    <node CPU="0.080974"/>
+    <node CPU="0.009504"/>
+    <node CPU="0.074673"/>
+    <node CPU="0.027721"/>
+    <node CPU="0.01733"/>
+    <node CPU="0.093771"/>
+    <node CPU="0.076086"/>
+  </nodes>
+  <links>
+    <link fromNode="0" toNode="8" Bandwidth="9.668139"/>
+    <link fromNode="1" toNode="8" Bandwidth="98.110859"/>
+    <link fromNode="2" toNode="8" Bandwidth="84.527299"/>
+    <link fromNode="3" toNode="8" Bandwidth="34.153969"/>
+    <link fromNode="4" toNode="8" Bandwidth="69.246346"/>
+    <link fromNode="5" toNode="8" Bandwidth="45.651418"/>
+    <link fromNode="6" toNode="8" Bandwidth="43.43981"/>
+    <link fromNode="7" toNode="8" Bandwidth="65.402863"/>
+  </links>
+</root>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="6" links="5">
+  <nodes>
+    <node label="6" x="62" y="22" CPU="0.145552"/>
+    <node label="7" x="21" y="66" CPU="0.561954"/>
+    <node label="8" x="95" y="78" CPU="0.304235"/>
+    <node label="9" x="65" y="27" CPU="0.904025"/>
+    <node label="10" x="26" y="48" CPU="0.451550"/>
+    <node label="11" x="60" y="33" CPU="0.586055"/>
+  </nodes>
+  <links>
+    <link label="5" fromNode="6" toNode="7" Bandwidth="60.141500"/>
+    <link label="6" fromNode="8" toNode="6" Bandwidth="65.000000"/>
+    <link label="7" fromNode="9" toNode="8" Bandwidth="59.169249"/>
+    <link label="8" fromNode="10" toNode="8" Bandwidth="75.239617"/>
+    <link label="9" fromNode="11" toNode="9" Bandwidth="7.810250"/>
+  </links>
+</root>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="1da06491-ba24-4dc0-a45c-7ece7676c832" projectUUID="1da06491-ba24-4dc0-a45c-7ece7676c832" sdkVersion="4.6.0" uuid="3eb6b38b-7af3-4989-b316-ef54439002ae" version="4">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="3eb6b38b-7af3-4989-b316-ef54439002ae"/>
+    <linked location="E:/fangzhenpingtai/fangzhen/flex_libs" path="/flex_libs" position="1" uuid="3eb6b38b-7af3-4989-b316-ef54439002ae"/>
+  </swc>
+  <misc/>
+  <theme/>
+</fxpProperties>

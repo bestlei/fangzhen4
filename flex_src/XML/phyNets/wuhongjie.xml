@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root nodes="4" links="3">
+  <nodes>
+    <node label="0" x="758" y="934" CPU="49.825367"/>
+    <node label="1" x="175" y="842" CPU="12.453194"/>
+    <node label="2" x="751" y="891" CPU="13.233603"/>
+    <node label="3" x="645" y="533" CPU="16.345079"/>
+  </nodes>
+  <links>
+    <link label="0" fromNode="0" toNode="1" Bandwidth="590.214368"/>
+    <link label="1" fromNode="2" toNode="0" Bandwidth="43.566042"/>
+    <link label="2" fromNode="3" toNode="2" Bandwidth="373.363094"/>
+  </links>
+</root>

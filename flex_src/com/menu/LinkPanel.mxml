@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+		   backgroundColor="0xFFFFFF"
+		   creationComplete="init()"
+		   alpha="0.6" 
+		   width="200"
+		   height="100"
+		   xmlns:servasoftware="http://www.servasoftware.com/2009/twaver/flex">
+	<mx:Script>
+		<![CDATA[
+			import twaver.Collection;
+			import twaver.Element;
+			import twaver.ICollection;
+			import twaver.Node;
+			import twaver.Link;
+			import twaver.Styles;
+			private var _element:Element;
+		
+			private function init():void
+			{
+				//				dialChart.colorRangeList=new Collection([0xFF0000, 0x00FF00, 0x0000FF]);
+				//				dialChart.majorScaleCount=5;
+				//				
+				//				var n:Node=new Node();
+				//				n.setClient("p1", Math.random());
+				//				n.setClient("p2", Math.random());
+				//				n.setClient("p3", Math.random());
+				//				n.setClient("dialValue", 20);
+				var col:ICollection=new Collection();
+				col.addItem(40);
+				col.addItem(60);
+				//n.setClient("pieValue", col);
+				//this.element=n;
+			}
+			
+			public function get element():Element
+			{
+				return _element;
+			}
+			public function setData(link:Link):void{
+				this.element=link;
+			}
+			public function set element(value:Element):void
+			{
+				if (value == this.element)
+				{
+					return;
+				}
+				_element=value;
+				updateUI();
+			}
+			
+			public function updateUI():void
+			{
+				if (this.element == null)
+				{
+					input1.text="";
+					input2.text="";
+					
+				}
+				else
+				{
+					input1.text=element.name;
+					input2.text=element.getClient("board");
+					
+					//					var value:Number=this.element.getClient("dialValue");
+					//					updateDial(value);
+					//					
+					//					var values:ICollection=this.element.getClient("pieValue");
+					//					updatePie(values);
+				}
+			}
+			
+			//			public function updateDial(value:Number):void
+			//			{
+			//				dialChart.dataBox.clear();
+			//				var n:Node=new Node();
+			//				n.setStyle(Styles.CHART_VALUE, value);
+			//				dialChart.dataBox.add(n);
+			//			}
+			//			
+			//			public function updatePie(values:ICollection):void
+			//			{
+			//				pieChart.dataBox.clear();
+			//				var size:int=values.count;
+			//				for (var i:int=0; i < size; i++)
+			//				{
+			//					var n:Node=new Node();
+			//					n.setStyle(Styles.CHART_VALUE, values.getItemAt(i));
+			//					pieChart.dataBox.add(n);
+			//				}
+			//			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%"
+			 height="100%"
+			 verticalGap="2" borderAlpha="0.0">
+		
+		<mx:VBox width="100%">
+			<mx:HBox width="100%"
+					 paddingRight="3">
+				<mx:Text width="50%"
+						 text="链路名字:"
+						 textAlign="center"
+						 
+						 color="#FF1402"/>
+				<mx:Text id="input1"
+						 width="50%"
+						 textAlign="center"
+						 color="#FF1402"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:HBox width="100%"
+				 paddingRight="3">
+			<mx:Text width="50%"
+					 text="链路带宽利用率:"
+					 textAlign="center" color="#FC1D06"/>
+			<mx:Text id="input2"
+					 width="50%"
+					 textAlign="center"
+					 color="#FC1D06"/>
+		</mx:HBox>
+		
+		
+		
+	</mx:VBox>
+</mx:Canvas>

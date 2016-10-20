@@ -1,0 +1,1220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:iframe="iframe.*"
+		 xmlns:drawTopo="systemfunction.view.*"
+		 creationComplete="init();"
+		 xmlns:tw="http://www.servasoftware.com/2009/twaver/flex"
+		 width="100%" height="568" horizontalAlign="center" verticalAlign="middle" borderVisible="false">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="fileupload" destination="fileUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedAlg" destination="embed" endpoint="messagebroker/amf"/>
+		
+		<s:RemoteObject id="fileListHelper" destination="fileListHelper" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="fileDirHelper" destination="fileDirHelper" endpoint="messagebroker/amf"/> 	
+		<s:RemoteObject id="saxXmlUtil" destination="saxXmlUtil" endpoint="messagebroker/amf"/> 
+		
+		<s:RemoteObject id="jarupload" destination="jarUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="test" destination="test" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="dllupload" destination="dllUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedc" destination="embedC" endpoint="messagebroker/amf"/> 
+		
+		<s:RemoteObject id="createtopo" destination="createTopo" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="routerwaxman" destination="routerWaxman" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="guigenConf" destination="guiGenConf" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="guigenGLPConf" destination="guiGenGLPConf" endpoint="messagebroker/amf"/>
+		
+	</fx:Declarations>
+	
+	<!--
+	<fx:Script source="physicalNetView_as.as"/>
+	-->
+	
+	<fx:Script>
+		<![CDATA[
+			import com.menu.FileDialog;
+			import com.menu.InPanel;
+			import com.menu.InputDialog;
+			import com.menu.LinkPanel;
+			
+			import common.CustomCreateLinkInteractionHandler;
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			import flash.geom.Point;
+			import flash.net.FileReference;
+			
+			import mx.collections.ArrayList;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import skin.dropDownListSkin;
+			
+			import twaver.*;
+			import twaver.Link;
+			import twaver.network.Network;
+			import twaver.network.interaction.DefaultInteractionHandler;
+			
+			var flag:Boolean =false;
+			public var box:ElementBox  ;
+			var xmlSerializer:XMLSerializer;
+			private var info:InPanel=new InPanel();
+			private var infoLink:LinkPanel=new LinkPanel();
+			
+			private var phynodes:Array;
+			private var phylinks:Array;	
+			[Bindable] private var PhyNet:XML;
+			private var dividerFunc:DividerFunc = new DividerFunc();
+			private var timer:Timer=new Timer(2000);
+			[Bindable]private var embededOutXML:XML;
+			[Bindable]private var embedResult:ArrayCollection; //映射结果展示
+			
+			private var image:Image = new Image();
+			private var image_path:String = "";
+			
+			private var jarFile:FileReference;//定义一个FileReference 进行文件的上
+			private var dllFile:FileReference;
+			
+			public static var count:int=0;
+			[Bindable]
+			private var downLoadList:ArrayList = new ArrayList();
+			[Bindable]
+			public var subTopoFileName:ArrayCollection;
+			
+			public var reqFileName:String;
+			public var reqNum:String;
+			[Bindable]
+			public static var fileColl:ArrayCollection = new ArrayCollection();
+			
+			//物理网络选择的参数
+			[Bindable]
+			public static var subTopoName:String ;
+			
+			//用于标记在虚拟拓扑选择的过程中采用的是那种方式
+			public var virtualTopo:int = 1;               //1:表示拓扑大小选择；2：表示自定义拓扑生成；3：表示拓扑绘制
+			public var algorithomSet:int = 1;      //1.表示默认算法选择，2表示自定义算法上传
+		
+			
+			//拓扑大小选择的参数
+			public var smallNum:int;
+			public var middleNum:int;
+			public var bigNum:int;
+			
+			//拓扑绘制参数
+			
+			//拓扑自定义参数
+			public static var VirReqArray : ArrayList = new ArrayList();
+			public var customVirnetCount : int = 0;
+			private function init():void{
+				
+				timer.addEventListener(TimerEvent.TIMER,showVNTimer);
+				
+				box = netWork.elementBox;
+				//路径
+				var path:String = "D://flexW//fangzhen4//flex_src//XML//phyNets//";      
+				fileDirHelper.addEventListener(ResultEvent.RESULT,fileresult);
+				fileDirHelper.getFileDectory(path);
+				
+				
+				SerializationSettings.registerGlobalClient("CPU", Consts.TYPE_STRING);	
+				SerializationSettings.registerGlobalClient("board", Consts.TYPE_STRING);	
+				
+				xmlSerializer=new XMLSerializer(box);
+				
+				Styles.setStyle(Styles.LINK_BUNDLE_EXPANDED, false);
+				twaver.Defaults.LINK_HANDLER_LABEL_FUNCTION =null;
+				phyNetwork.elementBox.setStyle(Styles.BACKGROUND_TYPE,Consts.BACKGROUND_TYPE_IMAGE_VECTOR);
+				phyNetwork.elementBox.setStyle(Styles.BACKGROUND_IMAGE,"Images/bg_topo.jpg");
+				phyNetwork.elementBox.setStyle(Styles.BACKGROUND_IMAGE_STRETCH,Consts.STRETCH_FILL);
+				
+				netWork.topCanvas.addChild(info);
+				info.visible=false;
+				info.includeInLayout=false;
+				
+				netWork.topCanvas.addChild(infoLink);
+				infoLink.visible=false;
+				infoLink.includeInLayout=false;
+				
+				jarFile=new FileReference();
+				dllFile=new FileReference();
+				jarFile.addEventListener(Event.SELECT, onSelectJar);
+				jarFile.addEventListener(Event.COMPLETE, completeHandle); 
+				dllFile.addEventListener(Event.SELECT, onSelectdll); 
+				dllFile.addEventListener(Event.COMPLETE, completeHandle);
+				
+				
+				netWork.selectionModel.addSelectionChangeListener(function(e:SelectionChangeEvent):void
+				{
+					
+					if (netWork.selectionModel.lastData != null)
+					{						
+						var node:Node=netWork.selectionModel.lastData as Node;
+						
+						if (node)
+						{							
+							var rect:Rectangle=netWork.getScopeRect(Consts.SCOPE_VIEWPORT);
+							var rx:Number=rect.x;
+							var ry:Number=rect.y;
+							var rw:Number=rect.width;
+							var rh:Number=rect.height;
+							
+							var inLeft:Boolean=true;
+							var inTop:Boolean=true;
+							if ((node.x + node.width / 2 - rw / 2) < rx)
+							{
+								inLeft=true;
+								
+							}
+							else
+							{
+								inLeft=false;
+							}
+							if ((node.y + node.height / 2 - rh / 2) < ry)
+							{
+								inTop=true;
+							}
+							else
+							{
+								inTop=false;
+							}
+							if (inLeft == true && inTop == true)
+							{
+								info.x=node.x + node.width;
+								info.y=node.y + node.height;
+							}
+							else if (inLeft == true && inTop == false)
+							{
+								info.x=node.x + node.width;
+								info.y=node.y - info.height;
+							}
+							else if (inLeft == false && inTop == true)
+							{
+								info.x=node.x - info.width;
+								info.y=node.y + node.height;
+							}
+							else
+							{
+								info.x=node.x - info.width;
+								info.y=node.y - info.height;
+							}							
+							info.setData(node);
+							info.visible=true;
+							info.includeInLayout=true;
+						}				
+					}
+					else
+					{
+						info.visible=false;
+						info.includeInLayout=false;
+					}	
+				});	
+			}
+			
+			private function uploadDll():void{  
+				var xmlTypes:FileFilter = new FileFilter("dll文件 (*.dll)", "*.dll");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(xmlTypes,allTypes);  
+				dllFile.browse(array); 	
+			}
+			private function uploadJar():void{  
+				var jarTypes:FileFilter = new FileFilter("jar文件 (*.jar)", "*.jar");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(jarTypes,allTypes);  
+				jarFile.browse(array); 	
+			}
+			private function completeHandle(event:Event):void  
+			{  
+				Alert.show("上传成功");  
+			}  		
+			private function onSelectJar(e:Event):void  
+			{  
+				Alert.show("上传 " + jarFile.name + " (共 " + Math.round(jarFile.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithJarUpload);  
+			}  
+			private function onSelectdll(e:Event):void  
+			{  
+				Alert.show("上传 " + dllFile.name + " (共 " + Math.round(dllFile.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithDllUpload);  
+			}  
+			private function proceedWithJarUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/JarUpload");  
+					
+					try {  
+						jarFile.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			private function proceedWithDllUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/DllUpload");  
+					
+					try {  
+						dllFile.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			
+			protected function loadphy_clickJarHandler(event:MouseEvent):void
+			{
+				jarupload.addEventListener(ResultEvent.RESULT, jarresult);
+				jarupload.getFileName();
+			}
+			
+			protected function jarresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				
+			}
+			protected function loadphy_clickDllHandler(event:MouseEvent):void
+			{
+				dllupload.getFileName();	
+				dllupload.addEventListener(ResultEvent.RESULT, dllresult);
+						
+			}
+			
+			protected function dllresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				
+			}
+			protected function processValues(selectedIndex:int,virNetDir:String,subNetDir:String):void{
+				var index:int = selectedIndex;
+				var selectedFile:String = subTopoFileName[index].toString();
+				test.embed(selectedFile,virNetDir,subNetDir);
+			}
+			protected function processValues2(selectedIndex:int,virNetDir:String,subNetDir:String):void{
+				var index:int = selectedIndex;
+				var selectedFile:String = subTopoFileName[index].toString();
+				embedc.embed(selectedFile,virNetDir,subNetDir,10);
+			}
+						
+			private function fileresult(event:ResultEvent):void
+			{
+				var temp:ArrayCollection = new ArrayCollection();
+				temp= event.result as ArrayCollection;
+				for each( var i : Object in temp){
+					var o:Object = new Object();
+					o.name = i.toString();
+					fileColl.addItem(o);
+					
+				} 
+				
+			}
+			protected function dg_showFileList_clickHandler(event:ListEvent):void
+			{
+				var fileName:String =(event.target as DataGrid).selectedItem[(event.target as DataGrid).columns[event.columnIndex].dataField];
+				sub_topName.text=fileName;
+			}
+			//拓扑大小选择时的 确定 按钮的点击事件
+			protected function virnet_Save(event:MouseEvent):void
+			{
+				virtualTopo = 1;
+				var s:String = smallToponum.text;
+				var m:String = middleTopoNum.text;
+				var b:String  = bigTopoNum.text;		
+				
+				smallNum = Number(s);
+				middleNum =Number(m)
+				bigNum = 	Number(b);
+				Alert.show("拓扑大小选择成功。");
+			//	Alert.show("需要小型拓扑 "+smallNum+"个，中型拓扑 "+middleNum+"个，大型拓扑"+bigNum+"个。","提示",Alert.OK|Alert.CANCEL);
+			}
+			//拓扑大小选择时的 清除 按钮的点击事件
+			protected function clear_Handle(event:MouseEvent):void
+			{
+				smallToponum.text="";
+				middleTopoNum.text="";
+				bigTopoNum.text="";
+			}
+			
+			//选择物理网络布局中的提交时间
+			protected function selectSubTopo_clickHandler(event:MouseEvent):void
+			{
+				subTopoName =sub_topName.text;
+			  Alert.show("物理网络提交成功，物理网络名称为："+subTopoName+"。",Alert.OK|Alert.CANCEL);
+			}
+			protected function onLastClick(event:MouseEvent):void{
+				if(count==0){
+					return;
+				}else if(count>=1){
+					count--;
+
+					switch(count){
+						case 0:
+						/* 	l0.setStyle("backgroundColor","0x417eb7"); */
+							b1.height=0;
+							b1.width=0;
+							b1.visible=false;
+							b0.height=400;
+							b0.width=1200;
+							b0.visible=true;
+							break;
+						case 1:
+						/* 	l1.setStyle("backgroundColor","0x417eb7"); */
+							b2.height=0;
+							b2.width=0;
+							b2.visible=false;
+							b1.height=400;
+							b1.width=1200;
+							b1.visible=true;
+							break;
+						case 2:
+						/* 	l2.setStyle("backgroundColor","0x417eb7"); */
+							b3.height=0;
+							b3.width=0;
+							b3.visible=false;
+							b2.height=400;
+							b2.width=1200;
+							b2.visible=true;
+							break;
+						case 3:
+							/* l3.setStyle("backgroundColor","0x417eb7");	 */			
+							break;
+					}
+				/* 	switch(count+1){
+						case 0:
+							l0.setStyle("backgroundColor","#D9D9D2");	
+							break;
+						case 1:
+							l1.setStyle("backgroundColor","#D9D9D2");
+							break;
+						case 2:
+							l2.setStyle("backgroundColor","#D9D9D2");
+							break;
+						case 3:
+							l3.setStyle("backgroundColor","#D9D9D2");
+							break;
+					} */
+				}
+			}		
+			protected function onNextClick(event:MouseEvent):void{
+				if(count==3){
+					return ;
+				}else if(count<=2){
+					count++;
+					switch(count){
+						case 0:
+							/* l0.setStyle("backgroundColor","0x417eb7");  */
+							break;
+						case 1:
+							/* l1.setStyle("backgroundColor","0x417eb7");  */
+							b0.height=0;
+							b0.width=0;
+							b0.visible=false;
+							b1.height=400;
+							b1.width=1200;
+							b1.visible=true;
+							break;
+						case 2:
+							/* l2.setStyle("backgroundColor","0x417eb7"); */
+							b1.height=0;
+							b1.width=0;
+							b1.visible=false;
+							b2.height=400;
+							b2.width=1200;
+							b2.visible=true;
+							break;
+						case 3: //映射结果展示页面
+							/* l3.setStyle("backgroundColor","0x417eb7"); */
+							b2.height=0;
+							b2.width=0;
+							b2.visible=false;
+							b3.height=400;
+							b3.width=1200;
+							b3.visible=true;
+							Alert.show(virtualTopo+"");
+							if(virtualTopo != 0 && algorithomSet !=0) //参数已经设置好
+							{
+							       if(algorithomSet == 1)  //默认算法
+								   {
+								       if(virtualTopo == 1)  //拓扑大小设置
+									   {
+										//  Alert.show("1111");
+											   var s:int =int(smallToponum.text);
+											   var m:int =int(middleTopoNum.text);
+											   var b:int = int(bigTopoNum.text);
+											
+											   phyNetwork.elementBox.clear();
+											   phynodes = new Array();
+											   phylinks = new Array();
+											   //加载物理网络
+											   var request:URLRequest = new URLRequest("XML/phyNets/" + subTopoName);
+											   var loader:URLLoader = new URLLoader(request);
+											   loader.dataFormat = URLLoaderDataFormat.TEXT;
+											   loader.addEventListener(Event.COMPLETE,loadPhyNet);
+											   
+										//	   Alert.show("拓扑大小设置映射");
+											   embedAlg.virnet_deal(subTopoName , s, m, b);
+											   showEmbededOut(subTopoName);
+									   }else if(virtualTopo == 2){
+										   phyNetwork.elementBox.clear();
+										   phynodes = new Array();
+										   phylinks = new Array();
+										   //加载物理网络
+										   var request:URLRequest = new URLRequest("XML/phyNets/" + subTopoName);
+										   var loader:URLLoader = new URLLoader(request);
+										   loader.dataFormat = URLLoaderDataFormat.TEXT;
+										   loader.addEventListener(Event.COMPLETE,loadPhyNet);
+										   
+										   //Alert.show("自定义拓扑");
+										   embedAlg.customVirnet_deal(subTopoName, VirReqArray, customVirnetCount);
+										   showEmbededOut(subTopoName);
+										   
+									   }else if(virtualTopo == 3){
+										//   Integer.parseInt(reqNum);
+										 
+									   }
+									   
+								   }else  //自定义算法
+								   {
+								      
+								   }
+							}
+							
+							break;
+					}
+					/* switch(count-1){
+						case 0:
+							l0.setStyle("backgroundColor","#D9D9D2");	
+							break;
+						case 1:
+							l1.setStyle("backgroundColor","#D9D9D2");
+							break;
+						case 2:
+							l2.setStyle("backgroundColor","#D9D9D2");
+							break;
+						case 3:
+							l3.setStyle("backgroundColor","#D9D9D2");
+							break;
+					} */
+				}
+			}	
+			
+			
+			//2016-06-05
+			private function topoGenerated_Maxman():void{  
+				
+				customVirnetCount++;
+				Alert.show("zhangyanyan");
+				var nodeNum:int =int(nodesNum.text);
+				var cpuMinValue:Number =Number(cpuMin.text);
+				var cpuMaxValue:Number =Number(cpuMax.text);
+				var alpha :Number = Number(alphaValue.text);
+				var beta :Number = Number(betaValue.text);
+				var topofileName :String = String(topoFileName.text);
+				var typeOfFile : String = "node_link";
+				VirReqArray.addItem(topofileName);
+				
+				
+				//guigenGLPConf.MakeGLPConfFile(nodeNum, alpha, beta);
+				guigenConf.MakeConfFile("RT_Waxman",nodeNum,alpha, beta);
+				//路径
+				createtopo.create("GUI_GEN.conf","D://flexW//fangzhen4//"+topofileName,topofileName,cpuMinValue,cpuMaxValue,typeOfFile,"seed_file");
+				
+				
+			}
+			
+			private function topoGenerated_GLP():void{
+				
+				customVirnetCount++;
+				
+				Alert.show("zhangyanyan");
+				var nodeNum:int =int(nodeNum.text);
+				var cpuMinValue:Number =Number(cpumin.text);
+				var cpuMaxValue:Number =Number(cpumax.text);
+				var p :Number = Number(pValue.text);
+				var beta :Number = Number(betavalue.text);
+				var topofileName :String = String(filename.text);
+				var typeOfFile : String = "node_link";
+				VirReqArray.addItem(topofileName);
+				
+				
+				//guigenGLPConf.MakeGLPConfFile(nodeNum, alpha, beta);
+				guigenConf.MakeConfFile("RT_GLP",nodeNum,p, beta);
+				
+				createtopo.create("GUI_GEN.conf","D://flexW//fangzhen4//"+topofileName,topofileName,cpuMinValue,cpuMaxValue,typeOfFile,"seed_file");
+				
+				
+			}
+			
+			private function cancelClicked_Maxman():void{  
+				nodesNum.text = "";
+				cpuMin.text = "";
+				cpuMax.text = "";
+				alphaValue.text = "";
+				betaValue.text = "";
+				topoFileName.text = "";
+				//g.init();
+				//g.setVisible(true);				
+			}
+			
+			private function cancelClicked_GLP():void{  
+				
+				nodeNum.text = "";
+				cpumin.text = "";
+				cpumax.text = "";
+				pValue.text = "";
+				betavalue.text = "";
+				filename.text = "";
+				//g.init();
+				//g.setVisible(true);				
+			}
+			//2016-06-05			
+			//放置物理网络节点和链路位置
+			protected function loadPhyNet(event:Event):void{
+				PhyNet = XML(event.target.data);//将得到的数据转换成XML类型
+				var nodeCount:int = PhyNet.nodes.node.length();
+				var linkCount:int = PhyNet.links.link.length();
+				
+				//放置节点
+				for(var nodeIndex:int=0;nodeIndex < nodeCount;nodeIndex++){
+					var node:Node = new Node;
+					node.name = "N"+PhyNet.nodes.node[nodeIndex].@label;
+					node.setLocation((PhyNet.nodes.node[nodeIndex].@x)*phyNetwork.width/100,(PhyNet.nodes.node[nodeIndex].@y)*phyNetwork.height/100);
+					phynodes.push(node);
+					phyNetwork.elementBox.add(node);
+				}
+				//放置链路
+				for(var linkIndex:int=0;linkIndex < linkCount;linkIndex++){
+					var link:Link = new Link;
+					link.name = "L"+PhyNet.links.link[linkIndex].@label;
+					link.fromNode = phynodes[PhyNet.links.link[linkIndex].@fromNode];
+					link.toNode = phynodes[PhyNet.links.link[linkIndex].@toNode];
+					phylinks.push(link);
+					phyNetwork.elementBox.add(link);
+				}				
+				trace("fangzhi jie");
+			}
+			
+			//展示映射结果
+			protected function showEmbededOut(filename:String){
+				
+				var splitArray:Array = filename.split(".");
+				//需要加载的映射结果文件
+				var embedOutFile = "XML/embedOut/"+splitArray[0]+"-embed-out.xml";
+				var request:URLRequest = new URLRequest(embedOutFile);
+				var loader:URLLoader=new URLLoader(request);
+				loader.dataFormat=URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE, loadEmbedOut);
+				
+			}
+			protected function loadEmbedOut(event:Event){
+				embededOutXML = XML(event.target.data);
+		
+				timer.start();
+				
+				
+			}
+			//定时展示每个映射成功的虚拟网络
+			protected function showVNTimer(evt:TimerEvent){	
+				var count:int = embededOutXML.VN.length();
+								
+				var nodes:Array = new Array();	
+				if(evt.target.currentCount<=count){
+					var VNIndex = evt.target.currentCount-1;
+					var nodeCount:int = embededOutXML.VN[VNIndex].nodes.node.length();
+					var linkCount:int = embededOutXML.VN[VNIndex].links.link.length();
+					phyNetwork.elementBox.alarmBox.clear();
+		
+					for(var nodeIndex:int=0;nodeIndex < nodeCount;nodeIndex++){
+						var node:Node = new Node;
+						node.name = embededOutXML.VN[VNIndex].nodes.node[nodeIndex].@label;
+	
+						nodes.push(node);
+						
+						var nodeAlarm:Alarm = new Alarm(null, phynodes[embededOutXML.VN[VNIndex].nodes.node[nodeIndex].@toNode].id,AlarmSeverity.WARNING);
+						nodeAlarm.acked = true;
+						phyNetwork.elementBox.alarmBox.add(nodeAlarm);
+					}
+					
+					for(var linkIndex:int=0;linkIndex < linkCount;linkIndex++){
+						var link:Link = new Link;
+						link.name = embededOutXML.VN[VNIndex].links.link[linkIndex].@label;
+						link.fromNode = nodes[embededOutXML.VN[VNIndex].links.link[linkIndex].@fromNode];
+						link.toNode = nodes[embededOutXML.VN[VNIndex].links.link[linkIndex].@toNode];
+		//				virtualNetwork.elementBox.add(link);		
+						
+						var linkmapCount:int=embededOutXML.VN[VNIndex].links.link[linkIndex].linkmap.length();
+						for(var linkmapIndex:int=0;linkmapIndex<linkmapCount;linkmapIndex++){
+							var linkAlarm:Alarm = new Alarm(null,phylinks[embededOutXML.VN[VNIndex].links.link[linkIndex].linkmap[linkmapIndex].@toLink].id,AlarmSeverity.WARNING);
+							linkAlarm.acked = true;
+							phyNetwork.elementBox.alarmBox.add(linkAlarm);
+						}
+					}
+					//显示性能告警信息
+					var alarmNodeCount:int = embededOutXML.VN[VNIndex].alarms.alarmNodes.@count;
+					var alarmLinkCount:int = embededOutXML.VN[VNIndex].alarms.alarmLinks.@count;
+					for(var alarmNodeIndex:int=0; alarmNodeIndex<alarmNodeCount;alarmNodeIndex++){
+						var nodeAlarm2:Alarm =new Alarm(null,phynodes[embededOutXML.VN[VNIndex].alarms.alarmNodes.alarmNode[alarmNodeIndex].@label].id,AlarmSeverity.CRITICAL);
+						nodeAlarm2.acked = true;
+						phyNetwork.elementBox.alarmBox.add(nodeAlarm2);
+					}
+					//将告警信息抽取出来，形成xml文件
+					
+					
+					
+					for(var alarmLinkIndex:int=0;alarmLinkIndex<alarmLinkCount;alarmLinkIndex++){
+						var linkAlarm2:Alarm = new Alarm(null,phylinks[embededOutXML.VN[VNIndex].alarms.alarmLinks.alarmLink[alarmLinkIndex].@label].id,AlarmSeverity.CRITICAL);
+						linkAlarm2.acked = true;
+						phyNetwork.elementBox.alarmBox.add(linkAlarm2);
+					}
+					
+					
+				}else{
+					
+					//弹窗展示此次映射的评价指标
+					var temp:String = " ";
+				
+					temp= "当前一共有到达了 "+embededOutXML.Evaluation.@Arrived+" 个虚拟请求; ";
+					temp += "成功了 "+embededOutXML.Evaluation.@SuccessNum+" 个，失败了 "+embededOutXML.Evaluation.@FailNum
+						+" 个，接受率为："+embededOutXML.Evaluation.@AcceptRate;
+					temp += "; 此次映射的受益为："+embededOutXML.Evaluation.@Revenue+" ,花销为："+embededOutXML.Evaluation.@Cost
+						+" ,花销受益比为："+embededOutXML.Evaluation.@CR;
+					temp += "; 映射失败的虚拟请求为：";
+					
+					var failVNCount:int = embededOutXML.Evaluation.failVN.fail_num.length();
+					for(var failVN:int=0; failVN<failVNCount; failVN++){
+						temp += embededOutXML.Evaluation.failVN.fail_num[failVN].@Num+", ";
+					}
+					
+				//	Alert.show(temp);
+										
+					timer.stop();
+					timer.reset();
+					
+					var topoSel:String;
+					var topoCount:int;
+					if(virtualTopo ==1)  //拓扑大小设置
+					{
+					    topoSel = "拓扑大小设置";
+						topoCount = bigNum +smallNum+middleNum;
+					}else if(virtualTopo ==2) //自定义拓扑
+					{
+						topoSel = "自定义拓扑";
+						
+						//张妍妍需要调整结果展示格式
+						
+					}else if(virtualTopo ==3) //拓扑绘制
+					{
+						topoSel = "拓扑绘制";
+						
+					}
+					
+					 var result:Array =[
+						{variable:'物理拓扑名称 ',detail:subTopoName},
+						{variable:'虚拟拓扑方式 ',detail:topoSel},
+						{variable:'虚拟拓扑个数 ',detail:embededOutXML.Evaluation.@Arrived},
+						{variable:'成功映射个数 ',detail:embededOutXML.Evaluation.@SuccessNum},
+						{variable:'失败映射个数 ',detail:embededOutXML.Evaluation.@FailNum},
+						{variable:'网络接受率 ',detail:embededOutXML.Evaluation.@AcceptRate},
+					 {variable:'收益 ',detail:embededOutXML.Evaluation.@Revenue},
+					 {variable:'花销',detail:embededOutXML.Evaluation.@Cost}					
+					];
+					 embedResult = new ArrayCollection(result); 
+					 
+				}
+			}
+			
+			public function setResource(event:MouseEvent):void{
+				flag=true;				
+			}
+			var guangzhou:Node ;
+			public function drawResource(event:MouseEvent):void{
+				
+				if(flag){
+					guangzhou = new Node();
+					guangzhou.name = "req01";
+					guangzhou.location = new Point(event.currentTarget.mouseX,event.currentTarget.mouseY);
+					guangzhou.image="Images/P1.png";
+					flag=false;	
+					reName();
+				}
+			}
+			private function reName():void{
+				InputDialog.show(netWork,"请输入节点信息",guangzhou.name+" "+0,
+					function(info:String):void{
+						var strs:Array=info.split(" ");
+						guangzhou.name=strs[0];
+						
+						guangzhou.setClient("CPU",strs[1]);
+						box.add(guangzhou);
+					},
+					mouseX-50,mouseY-50
+				);
+				
+			}
+			private function drawLink():void{
+				
+				netWork.setCreateLinkInteractionHandlers( null,null,null,false,-1,false);
+				createLinkInteraction();
+			}
+			private function clear():void{
+				box.clear();
+				
+			}
+			private function save():void{
+				
+				var path:String=new String();
+				var saveInfo:String=xmlSerializer.serialize();
+				
+				FileDialog.show(netWork,"请输入拓扑名称","",
+					function(info:String):void{
+						path="D://flexW//fangzhen4//flex_src//XML//virNets//"+info;
+						reqFileName=path;
+						saxXmlUtil.saxXml(saveInfo,path);
+					},
+					mouseX-50,mouseY-50
+				);
+			}
+			private function setVirNum():void{
+				
+				
+				FileDialog.show(netWork,"请输入虚拟网个数","",
+					function(info:String):void{
+						reqNum = info;
+					 
+					},
+					mouseX-50,mouseY-50
+				);
+			}
+			private function btn1Click():void{
+				virtualTopo = 1;  //表示拓扑大小设置
+				p1.height=350;
+				p1.width=1150;
+				p1.visible=true;
+				p2.height=0;
+				p2.width=0;
+				p2.visible=false;
+				p3.height=0;
+				p3.width=0;
+				p3.visible=false;
+			}
+			private function btn2Click():void{
+				virtualTopo = 2;  //表示自定义拓扑上传
+				p1.height=0;
+				p1.width=0;
+				p1.visible=false;
+				p2.height=350;
+				p2.width=850;
+				p2.visible=true;
+				p3.height=0;
+				p3.width=0;
+				p3.visible=false;
+			}
+			private function btn3Click():void{
+				virtualTopo = 3;  //表示拓扑绘制
+				setVirNum();
+				p1.height=0;
+				p1.width=0;
+				p1.visible=false;
+				p2.height=0;
+				p2.width=0;
+				p2.visible=false;
+				p3.height=380;
+				p3.width=1200;
+				p3.visible=true;
+			}
+			private function btn4Click():void{
+				algorithomSet = 1;//表示选择的是默认映射算法
+				p4.height=350;
+				p4.width=1150;
+				p4.visible=true;
+				p5.height=0;
+				p5.width=0;
+				p5.visible=false;
+			}
+			private function btn5Click():void{
+				algorithomSet = 2;//表示选择的是自定义算法上传
+				p5.height=350;
+				p5.width=1150;
+				p5.visible=true;
+				p4.height=0;
+				p4.width=0;
+				p4.visible=false;
+			}
+			private function createLinkInteraction():void {
+				netWork.interactionHandlers = new Collection([
+					new CustomCreateLinkInteractionHandler(netWork),
+					new DefaultInteractionHandler(netWork)]);
+			}
+	
+
+			protected function last_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(count<0){
+					return;
+				}else if(count>=1){
+					count--;
+					
+					switch(count){
+						case 0:
+							/* 	l0.setStyle("backgroundColor","0x417eb7"); */
+							image_path = "Images/button/1.png";
+							process.source = image_path;
+							b1.height=0;
+							b1.width=0;
+							b1.visible=false;
+							b0.height=400;
+							b0.width=1200;
+							b0.visible=true;
+							break;
+						case 1:
+							/* 	l1.setStyle("backgroundColor","0x417eb7"); */
+							image_path = "Images/button/2.png";
+							process.source = image_path;
+							b2.height=0;
+							b2.width=0;
+							b2.visible=false;
+							b1.height=400;
+							b1.width=1200;
+							b1.visible=true;
+							break;
+						case 2:
+							/* 	l2.setStyle("backgroundColor","0x417eb7"); */
+							image_path = "Images/button/3.png";
+							process.source = image_path;
+							b3.height=0;
+							b3.width=0;
+							b3.visible=false;
+							b2.height=400;
+							b2.width=1200;
+							b2.visible=true;
+							break;
+						case 3:
+							/* l3.setStyle("backgroundColor","0x417eb7");	 */	
+							image_path = "Images/button/4.png";
+							process.source = image_path;
+							break;
+						default:
+							break;
+					}
+			    }
+			}
+
+
+			protected function next_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(count==3){
+					return;
+				}else if(count<=2){
+					count++;
+					switch(count){
+						case 0:
+							/* l0.setStyle("backgroundColor","0x417eb7");  */
+							image_path = "Images/button/1.png";
+							process.source = image_path;
+							break;
+						case 1:
+							/* l1.setStyle("backgroundColor","0x417eb7");  */
+							image_path = "Images/button/2.png";
+							process.source = image_path;
+							b0.height=0;
+							b0.width=0;
+							b0.visible=false;
+							b1.height=400;
+							b1.width=1200;
+							b1.visible=true;
+							break;
+						case 2:
+							/* l2.setStyle("backgroundColor","0x417eb7"); */
+							image_path = "Images/button/3.png";
+							process.source = image_path;
+							b1.height=0;
+							b1.width=0;
+							b1.visible=false;
+							b2.height=400;
+							b2.width=1200;
+							b2.visible=true;
+							break;
+						case 3: //映射结果展示页面
+							/* l3.setStyle("backgroundColor","0x417eb7"); */
+							image_path = "Images/button/4.png";
+							process.source = image_path;
+							b2.height=0;
+							b2.width=0;
+							b2.visible=false;
+							b3.height=400;
+							b3.width=1200;
+							b3.visible=true;
+							Alert.show(virtualTopo+"");
+							if(virtualTopo != 0 && algorithomSet !=0) //参数已经设置好
+							{
+								if(algorithomSet == 1)  //默认算法
+								{
+									if(virtualTopo == 1)  //拓扑大小设置
+									{
+										//  Alert.show("1111");
+										var s:int =int(smallToponum.text);
+										var m:int =int(middleTopoNum.text);
+										var b:int = int(bigTopoNum.text);
+										
+										phyNetwork.elementBox.clear();
+										phynodes = new Array();
+										phylinks = new Array();
+										//加载物理网络
+										var request:URLRequest = new URLRequest("XML/phyNets/" + subTopoName);
+										var loader:URLLoader = new URLLoader(request);
+										loader.dataFormat = URLLoaderDataFormat.TEXT;
+										loader.addEventListener(Event.COMPLETE,loadPhyNet);
+										
+										//	   Alert.show("拓扑大小设置映射");
+										embedAlg.virnet_deal(subTopoName , s, m, b);
+										showEmbededOut(subTopoName);
+									}else if(virtualTopo == 2){
+										phyNetwork.elementBox.clear();
+										phynodes = new Array();
+										phylinks = new Array();
+										//加载物理网络
+										var request:URLRequest = new URLRequest("XML/phyNets/" + subTopoName);
+										var loader:URLLoader = new URLLoader(request);
+										loader.dataFormat = URLLoaderDataFormat.TEXT;
+										loader.addEventListener(Event.COMPLETE,loadPhyNet);
+										
+										//Alert.show("自定义拓扑");
+										embedAlg.customVirnet_deal(subTopoName, VirReqArray, customVirnetCount);
+										showEmbededOut(subTopoName);
+										
+									}else if(virtualTopo == 3){
+										//   Integer.parseInt(reqNum);
+										
+									}
+									
+								}
+							}
+							
+							break;
+					}
+			    }
+	         }
+
+		]]>
+	</fx:Script>
+	
+	<s:BorderContainer id="mainBox"  width="100%" height="100%" borderVisible="false" backgroundColor="#f1f1f1"  skinClass="skin.bgImg">
+		<mx:Box width="100%" height="100%" direction="vertical" x="50" y="20">
+			<mx:Box width="100%" height="85" direction="horizontal" horizontalAlign="center" verticalAlign="middle" >
+				<mx:Image width="1200" height="80" id="process" source="Images/button/1.png" x="349"/>
+	
+			</mx:Box>
+			
+			<mx:Box width="100%" height="80%" >
+				<mx:HBox id ="b0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" visible="true">
+					<!-- step 1 布局选择物理网络-->
+					<s:BorderContainer width="1178" height="100%" visible="true" backgroundColor="#f1f1f1" borderVisible="false" fontStyle="normal" fontSize="15" x="11">
+						
+						<!-- 物理网络可供选择的列表-->
+						<mx:DataGrid id="dg_showFileList" width="240" height="331" x="482" y="28"  dataProvider="{fileColl}"   itemClick="dg_showFileList_clickHandler(event)" >   
+							<mx:columns>
+								<mx:DataGridColumn headerText="物理网络名" dataField="name"/> 
+							</mx:columns>					
+						</mx:DataGrid>					
+						<s:Label text="选中的物理网络名" x="897" y="81" fontWeight="normal" verticalAlign="middle" height="20"/>
+						<s:TextInput id="sub_topName" width="200" x="900" y="136"/>
+						<s:Button id="selectSubTopo" label="提交" x="902" y="211" click="selectSubTopo_clickHandler(event)" skinClass="skin.buttonStyle" enabled="true"/>						
+						<s:Label x="110" y="120" text="第一步，选择要使用的物理网络并上传，系统中可供使用的物理网络如列表所示：" height="60" width="186" fontWeight="normal" verticalAlign="middle"/>
+					</s:BorderContainer>									
+				</mx:HBox>
+				
+				<mx:HBox  id ="b1" width="0" height="0" visible="false" horizontalAlign="center" verticalAlign="middle">
+					<!-- step 2 布局-->
+					<s:Label x="110" y="120" text="第二步，选择要进行映射的虚拟网络并上传，可以随机生成、使用已有虚拟网络拓扑或重新绘制：" height="80" width="186" fontWeight="normal"/>
+						<mx:VBox width="100%" height="100%" x="300" y="20">				
+					       			<mx:HBox id="b11" width="100%" height="5%">
+									     <mx:Button id="btn1" label="拓扑大小选择" click="btn1Click()"/>					
+									     <mx:Button id="btn2" label="自定义拓扑上传" click="btn2Click()"/>			 <!-- 张妍妍添加的-->		
+									     <mx:Button id="btn3" label="拓扑绘制" click="btn3Click()"/>						
+				                    </mx:HBox>
+			                        <s:BorderContainer  width="100%" height="100%" visible="true" backgroundColor="#f1f1f1" borderVisible="true">
+				                         <!-- 吴虹洁  拓扑大小设置的界面-->	
+					                     <s:BorderContainer id="p1" backgroundColor="#f1f1f1" borderColor="#000000" y="5" x="300"  borderVisible="false"  visible="true">
+							                  <s:Label x="18" y="35" text="小型拓扑数：" width="90" height="25" fontSize="14" textAlign="center" textAlignLast="center" color="black" />
+							                  <s:TextInput x="130" y="25" height="27" id="smallToponum" />
+							                  <s:Label x="18" y="85" text="中型拓扑数：" width="90" height="25" fontSize="14" textAlign="center" textAlignLast="center" color="black" />
+							                  <s:TextInput x="130" y="75" height="27" id="middleTopoNum" />
+							                  <s:Label x="18" y="135" text="大型拓扑数：" width="90" height="25" fontSize="14" textAlign="center" textAlignLast="center" color="black" />
+							                  <s:TextInput x="130" y="125" height="27" id="bigTopoNum" />	
+							                  <s:Button label="保存"  x="50" y="250" click="virnet_Save(event)" skinClass="skin.buttonStyle"/>
+							                  <s:Button label="清除"  x="200" click="clear_Handle(event)" y="250"  skinClass="skin.buttonReset"/>
+					                </s:BorderContainer>
+								    <s:BorderContainer id="p2" height="0" width="0" backgroundColor="#f1f1f1" borderColor="#000000"  borderVisible="false"  visible="false">
+									    <!--自定义拓扑上传的界面-->	
+									    <mx:TabNavigator x="7" y="1" width="100%" height="100%">
+										   <s:NavigatorContent label="GLP" width="100%" height="100%" id="GLPType" backgroundColor="#f1f1f1">
+											<s:Label x="30" y="40" text="节点数：" width="63" fontSize="14"/>
+											<s:Label x="30" y="70" text="p：" fontSize="14"/>
+											<s:Label x="30" y="110" text="beta：" fontSize="14"/>
+											<s:Label x="30" y="140" text="文件名：" fontSize="14"/>
+											<s:Label x="310" y="40" text="CPU能力的最小值：" fontSize="14"/>
+											<s:Label x="310" y="70" text="CPU能力的最大值：" fontSize="14"/>
+											<s:Button x="360" y="250" label="拓扑生成" click="topoGenerated_GLP()" skinClass="skin.buttonStyle"/>
+											<s:Button x="480" y="250" label="取消" click="cancelClicked_GLP()" skinClass="skin.buttonReset"/>
+											<s:TextInput x="100" y="40" id="nodeNum"/>
+											<s:TextInput x="100" y="70" id="pValue"/>
+											<s:TextInput x="100" y="110" id="betavalue"/>
+											<s:TextInput x="100" y="140" id="filename"/>
+											<s:TextInput x="450" y="40" id="cpumin"/>
+											<s:TextInput x="450" y="70" id="cpumax"/>
+										   </s:NavigatorContent>
+										   <s:NavigatorContent label="Maxman" width="100%" height="100%" id="MaxmanType" backgroundColor="#f1f1f1">
+											<s:Label x="26" y="23" text="节点数：" width="58" height="19"/>
+											<s:Label x="27" y="53" text="α：" width="52"/>
+											<s:Label x="29" y="86" text="β："/>
+											<s:Label x="26" y="116" text="拓扑文件名："/>
+											<s:TextInput x="99" y="18"/>
+											<s:TextInput x="99" y="18" id="nodesNum"/>
+											<s:TextInput x="97" y="50" id="alphaValue"/>
+											<s:TextInput x="97" y="79" id="betaValue"/>
+											<s:TextInput x="100" y="109" id="topoFileName"/>
+											<s:Label x="304" y="26" text="CPU能力的最小值："/>
+											<s:Label x="309" y="60" text="CPU能力的最大值："/>
+											<s:TextInput x="452" y="20" id="cpuMin"/>
+											<s:TextInput x="452" y="59" id="cpuMax"/>
+											<s:Button x="326" y="187" label="拓扑生成" click="topoGenerated_Maxman()" id="topuGenerate" skinClass="skin.buttonStyle"/>
+											<s:Button x="477" y="189" label="取消" click="cancelClicked_Maxman()" skinClass="skin.buttonReset"/>
+										   </s:NavigatorContent>
+									</mx:TabNavigator>
+								
+								   </s:BorderContainer>
+				                   <!-- 裴科科  拓扑绘制的界面-->	
+								   <mx:VBox  id ="p3" width="0" height="0" horizontalAlign="center" verticalAlign="middle" visible="false">							
+							         <mx:HBox width="100%" height="10%" verticalAlign="middle">							
+								    	<mx:Image toolTip="网元A" id="itemSource1" source="Images/P1.png" mouseDown="setResource(event);" />
+								 	    <mx:Image source="Images/entityLink1.jpg" mouseDown="drawLink()" />
+								 	    <mx:Image source="Images/clear.jpg" mouseDown="clear()" />
+								  	    <mx:Image source="Images/save2.png" mouseDown="save()" />							
+							         </mx:HBox>
+									<tw:Network id="netWork" backgroundColor="#006699" width="100%" height="100%" mouseDown="drawResource(event)"/>
+						           </mx:VBox>
+					              </s:BorderContainer>	
+						</mx:VBox>
+					
+				</mx:HBox>
+				<mx:HBox  id ="b2" width="0" height="0" horizontalAlign="center" verticalAlign="middle"  visible="false">
+					<!-- step 3 布局-->
+					<s:Label x="110" y="120" text="第三步，选择要使用的映射算法，系统中有可供使用的默认映射算法，用户也可以上传新的自定义算法：" height="80" width="186" fontWeight="normal" verticalAlign="middle"/>
+					<mx:VBox width="100%" height="100%" x="300" y="20">					
+						<mx:HBox id="b12" width="100%" height="5%">
+							<mx:Button id="btn4" label="选择默认算法" click="btn4Click()"/>						
+							<mx:Button id="btn5" label="上传自定义算法" click="btn5Click()"/>
+						</mx:HBox>
+				
+				<s:BorderContainer  width="100%" height="100%" visible="true" backgroundColor="#f1f1f1" borderVisible="true">
+					<!-- 选择默认算法 布局-->
+					<s:BorderContainer id="p4" height="0" width="0" backgroundColor="#f1f1f1" borderColor="#000000"  borderVisible="false"  visible="true">
+						        <s:Label text="系统默认提供一套映射算法，算法说明如下：" x="200" y="50"/>
+						</s:BorderContainer>
+						
+					<s:BorderContainer id="p5" height="0" width="0" backgroundColor="#f1f1f1" borderColor="#000000"  borderVisible="false"  visible="false">
+						<s:BorderContainer id="javaLoad" height="350" width="400" x="150" y="0" cornerRadius="10" borderWeight="4" >
+							<mx:Panel title="上传Jar并运行" 		width="100%" height="100%" horizontalAlign="center" paddingTop="10"
+									  paddingBottom="10" paddingLeft="10" paddingRight="10">
+								<mx:TabNavigator id="tn" width="100%" height="100%" >
+									<mx:VBox label="上传Jar接口说明">
+										<mx:TextArea width="100%" height="100%" text="  上传的Jar包的入口类包名必须是embed，入口类名必须是Embed，入口函数必须是startEmbed，这个函数有两个参数，第一个参数是虚拟网请求文件所在的目录，第二个参数是物理网文件所在的目录。"/>
+									</mx:VBox>
+									<mx:VBox label="上传Jar">
+										<s:Button label="上传Jar" id="upAlgphy" width="100" height="40"  click="uploadJar()" />	
+										
+									</mx:VBox>
+									<mx:VBox label="选择Jar并运行">
+										<s:Form id="myForm" defaultButton="{mySubmitButton}">
+											<mx:FormItem label="虚拟网文件所在的目录">
+												<mx:TextInput id="virNetDir"/>
+											</mx:FormItem>
+											<mx:FormItem label="物理网文件所在的目录">
+												<mx:TextInput id="subNetDir"/>
+											</mx:FormItem>
+											<mx:FormItem>
+												<s:DropDownList id="algphy"  textAlign="center" prompt="加载Jar"   click="loadphy_clickJarHandler(event)" 
+																height="40" width="100"  dataProvider="{subTopoFileName}" />
+											</mx:FormItem>
+											<mx:FormItem>
+												<mx:Button label="提交" height="40" width="100" id="mySubmitButton" click="processValues(algphy.selectedIndex,virNetDir.text,subNetDir.text);"/>
+											</mx:FormItem>
+											
+										</s:Form>
+									</mx:VBox>
+								</mx:TabNavigator>
+							</mx:Panel>
+							
+						</s:BorderContainer>
+						
+						<s:BorderContainer id="dllLoad" height="350" width="400" x="700" y="0" cornerRadius="10" borderWeight="4">
+							<mx:Panel title="上传Dll并运行" 		width="100%" height="100%" horizontalAlign="center" paddingTop="10"
+									  paddingBottom="10" paddingLeft="10" paddingRight="10">
+								<mx:TabNavigator id="tn2" width="100%" height="100%" >
+									<mx:VBox label="上传Dll接口说明">
+										<mx:TextArea  width="100%" height="100%" text="  上传的Dll包的入口类包名必须是com，入口类名必须是EmbedC，入口函数必须是callEmbed，这个函数有两个参数，第一个参数是虚拟网请求文件所在的目录，第二个参数是物理网文件所在的目录。"/>
+									</mx:VBox>
+									<mx:VBox label="上传Dll">
+										<s:Button label="上传Dll" id="upDll"  height="40" width="100"   click="uploadDll()"  />		
+										
+									</mx:VBox>
+									<mx:VBox label="选择Dll并运行">
+										<s:Form id="myForm2" defaultButton="{mySubmitButton2}">
+											<mx:FormItem label="虚拟网文件所在的目录">
+												<mx:TextInput id="virNetDir2"/>
+											</mx:FormItem>
+											<mx:FormItem label="物理网文件所在的目录">
+												<mx:TextInput id="subNetDir2"/>
+											</mx:FormItem>
+											<mx:FormItem>
+												<s:DropDownList id="jarAlgphy"  textAlign="center" prompt="加载Dll" click="loadphy_clickDllHandler(event)" 
+																height="40" width="100"  dataProvider="{subTopoFileName}" />
+											</mx:FormItem>
+											<mx:FormItem>
+												<mx:Button label="提交" height="40" width="100" id="mySubmitButton2" click="processValues2(jarAlgphy.selectedIndex,virNetDir2.text,subNetDir2.text);"/>
+											</mx:FormItem>
+											
+										</s:Form>
+									</mx:VBox>
+								</mx:TabNavigator>
+							</mx:Panel>
+						</s:BorderContainer>
+					</s:BorderContainer>
+					</s:BorderContainer>
+				</mx:VBox>
+					</mx:HBox>
+				<mx:HBox  id ="b3" width="0" height="0" horizontalAlign="center" verticalAlign="middle"  visible="false">
+					<s:Label x="110" y="120" text="第四步，根据选择的拓扑和算法，所得的映射结果如图所示：" height="60" width="186" fontWeight="normal" verticalAlign="middle"/>
+					<!-- step 4 布局-->
+					<s:BorderContainer  height="100%" width="70%" backgroundAlpha=".1" visible="true">
+						
+						<tw:Network id="phyNetwork" width="100%" height="100%" visible="true">
+							
+						</tw:Network>
+					</s:BorderContainer>
+					<s:BorderContainer  height="100%" width="30%" backgroundAlpha=".1" visible="true" skinClass="skin.bgImg">
+						 <s:Label text="映射结果展示" fontSize="13" top="5" left="30"/>
+						<mx:DataGrid height="100%" width="100%" dataProvider="{embedResult}">
+							<mx:columns>
+								<mx:DataGridColumn headerText="参数" dataField="variable" />
+								<mx:DataGridColumn headerText="详情" dataField="detail" />
+							</mx:columns>
+						</mx:DataGrid>
+					</s:BorderContainer>					
+					
+				</mx:HBox>
+			</mx:Box>
+			<mx:Box width="100%" height="10%"  horizontalAlign="center" direction="horizontal" >
+			<!--	<mx:Image  source="@Embed('Images/button/shangyibu.png')" width="108" height="80" mouseDown="onLastClick(event)"/>
+				<mx:Image source="@Embed('Images/button/xiayibu.png')" width="127" height="82" mouseDown="onNextClick(event)"/>-->
+				
+				<s:Button label="上一步" id="last" click="last_clickHandler(event)" skinClass="skin.buttonLast"/>
+				<s:Button label="下一步" id="next" click="next_clickHandler(event)" skinClass="skin.buttonNext"/>
+			</mx:Box>
+		</mx:Box>
+	</s:BorderContainer>
+	
+</mx:VBox>

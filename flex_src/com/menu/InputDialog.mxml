@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" styleName="title">
+	<fx:Style>
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.title{
+			font-size:12;
+		}
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Text;
+			
+			import mx.managers.PopUpManager;
+			
+			public var callback:Function = null;
+			
+			// Event handler for the OK button.
+			
+			private function onOK():void {
+				
+				this.callback(inputText.text+" "+CPUInput.text);
+				
+				PopUpManager.removePopUp(this);
+				
+			}
+			
+			public static function show(frame: DisplayObject, title:String, value:String, callback:Function, x:int = 0, y:int = 0):void{
+				
+				var dialog:InputDialog = InputDialog(PopUpManager.createPopUp( frame, InputDialog , true));
+				
+				if(x && y){
+					
+					dialog.x = x;
+					
+					dialog.y = y;
+					
+				}else{
+					
+					PopUpManager.centerPopUp(dialog);
+					
+				}
+				
+				dialog.title=title;
+				var strs:Array=value.split(" ");
+				dialog.inputText.text=strs[0];
+				dialog.CPUInput.text=strs[1];
+				dialog.callback=callback;
+				
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:VBox fontSize="12">
+	
+		<mx:HBox>
+			<mx:Label text="节点标识：" width="40%"/>
+			<mx:TextInput id="inputText" width="60%"/>
+		</mx:HBox>
+		<mx:HBox>
+			<mx:Label text="CPU能力：" width="40%"/>
+			<mx:TextInput id="CPUInput" width="60%"/>
+		</mx:HBox>
+	</mx:VBox>
+	<mx:HBox horizontalAlign="right" defaultButton="{okButton}" fontSize="12">
+		<mx:Button label="保存" id="okButton" click="onOK();" />
+		<mx:Button label="取消" click="PopUpManager.removePopUp(this);"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

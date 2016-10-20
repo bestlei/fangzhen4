@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:twaver="http://www.servasoftware.com/2009/twaver/flex"
+		 creationComplete="init();"
+		 width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" borderVisible="false">
+	<fx:Script>
+		<![CDATA[
+			import skin.dropDownListSkin;
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="fileupload" destination="fileUpload" endpoint="messagebroker/amf"/> 
+		<s:RemoteObject id="embedAlg" destination="embed" endpoint="messagebroker/amf"/>
+	</fx:Declarations>
+	
+	<!--
+	<fx:Script source="physicalNetView_as.as"/>
+	-->
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.binding.utils.BindingUtils;
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			import flash.net.FileReference;
+			import flash.utils.Timer;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.List;
+			import mx.events.CloseEvent;
+			import mx.events.DividerEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.remoting.RemoteObject;
+			
+			import skin.buttonSkin;
+			
+			import spark.events.IndexChangeEvent;
+			
+			import twaver.Alarm;
+			import twaver.AlarmSeverity;
+			import twaver.Consts;
+			import twaver.ElementBox;
+			import twaver.IData;
+			import twaver.IElement;
+			import twaver.Link;
+			import twaver.Node;
+			import twaver.QuickFinder;
+			import twaver.Styles;
+			import twaver.network.Network;
+			
+			import mx.effects.easing.Bounce;
+			
+			private var display:Boolean = true;
+			private var dividerFunc:DividerFunc = new DividerFunc();
+			private var phynodes:Array;
+			private var phylinks:Array;			
+			[Bindable] private var subNetXML:XML;
+			[Bindable]private var embededOutXML:XML;
+			private var mark:Boolean = true;//mark=true,表示是拓扑大小的设置，mark为false为节点数，链路数的设置
+			[Bindable] private var PhyNet:XML;
+			private var timer:Timer=new Timer(1000);
+			private var file:FileReference;//定义一个FileReference 进行文件的上
+			
+			[Bindable]
+			public var subTopoFileName:ArrayCollection;//存储当前所有的物理拓扑文件文件名
+			
+			[Bindable]
+			public var embededFileName:ArrayCollection;//存储已经映射的结果文件的文件名
+			
+			public var big:int;
+			public var middle:int;
+			public var small:int;
+			
+			//初始化
+			private function init():void{
+				dividerFunc.dividerDoubleClick(hdb);
+				//timer.addEventListener(TimerEvent.TIMER, showVirtualNetwork);
+				//timer.addEventListener(TimerEvent.TIMER,showVNTimer);
+				
+				file = new FileReference();  
+				//file.addEventListener(ProgressEvent.PROGRESS, onProgress);  进度条
+				file.addEventListener(Event.SELECT, onSelect);  
+				file.addEventListener(Event.COMPLETE, completeHandle);  
+				virNetSet.visible = false;
+				virNetSet.includeInLayout = false;
+				phyNetwork.visible = true;
+				phyNetwork.includeInLayout = true; 
+				//Alert.show("load physicis network")
+				fileupload.addEventListener(ResultEvent.RESULT, fileresult);
+				fileupload.getFileName();
+			}
+			
+			
+			
+			//上传物理网络-start
+			private function uploadPhyNetwork():void{  
+				var xmlTypes:FileFilter = new FileFilter("XML文件 (*.xml)", "*.xml");
+				var allTypes:FileFilter = new FileFilter("所有文件 (*.*)", "*.*");
+				var array:Array = new Array(xmlTypes,allTypes);  
+				file.browse(array); 	
+			}
+			
+			private function completeHandle(event:Event):void  
+			{  
+				Alert.show("上传成功");  
+			}  
+			
+			private function onSelect(e:Event):void  
+			{  
+				Alert.show("上传 " + file.name + " (共 " + Math.round(file.size) + " 字节)?","确认上传",Alert.YES|Alert.NO,null,proceedWithUpload);  
+			}  
+			
+			private function proceedWithUpload(e:CloseEvent):void  
+			{  
+				if(e.detail == Alert.YES){  
+					var request:URLRequest = new URLRequest("servlet/FileUpload");  
+					
+					try {  
+						file.upload(request);
+					} catch(error:Error) {  
+						Alert.show("上传失败");  
+					}  
+				}  
+			} 
+			
+			//上传物理网-End
+				
+			//加载物理网-start
+			protected function PhyNetworkCheck(event:MouseEvent):void{
+				virNetSet.visible = false;
+				virNetSet.includeInLayout = false;
+				phyNetwork.visible = true;
+				phyNetwork.includeInLayout = true; 
+				topofilenameinput.text = "";
+				
+				phyNetwork.elementBox.clear();
+				phynodes = new Array();
+				phylinks = new Array();
+				//路径
+				
+				var request:URLRequest = new URLRequest("XML/phyNets/" + selectedItem.toString());
+				var loader:URLLoader = new URLLoader(request);
+				loader.dataFormat = URLLoaderDataFormat.TEXT;
+				loader.addEventListener(Event.COMPLETE,loadPhyNet);
+			}	
+			
+			protected function topoFileNameInput(searchText:String):void{
+				
+				for(var subTopoFileIndex:int=0;subTopoFileIndex < subTopoFileName.length;subTopoFileIndex++){
+					var temString:String = subTopoFileName[subTopoFileIndex].toString(); 
+					var searchTextLength : int = searchText.length-1;
+					
+					//Alert.show("zichuan" + temString);
+					//Alert.show("searchString" + searchText);
+					if( temString.search(searchText) != -1){
+						//定位到List的相应的第一个位置
+						//Alert.show("textInputchanged");
+						break;
+					}
+					//}
+				}
+				
+				
+				if(subTopoFileIndex == 1){
+					source.selectedItem = subTopoFileName[subTopoFileIndex-1];
+					//topofilenameinput.text = source.selectedItem.toString();
+					
+				}
+				else{
+					source.selectedItem = subTopoFileName[subTopoFileIndex];
+					//topofilenameinput.text = source.selectedItem.toString();
+					//source.ensureIndexIsVisible(sourcet.selectedItem);
+					//topofilenameinput.
+				}
+			}
+			
+			protected function topoFileSelected(event:MouseEvent):void{
+				source.selectedItem=List(event.target).selectedItem;
+				topofilenameinput.text = source.selectedItem.toString();
+				Alert.show(source.selectedItem.toString());
+				
+			}
+			protected function loadphy_clickHandler(event:MouseEvent):void
+			{
+				virNetSet.visible = false;
+				virNetSet.includeInLayout = false;
+				phyNetwork.visible = true;
+				phyNetwork.includeInLayout = true; 
+				//Alert.show("load physicis network")
+				fileupload.addEventListener(ResultEvent.RESULT, fileresult);
+				fileupload.getFileName();
+			}
+			
+			protected function fileresult(event:ResultEvent):void{
+				subTopoFileName = event.result as ArrayCollection;
+				//trace(subTopoFileName);
+				
+			}
+			
+			protected function loadPhyNet(event:Event):void{
+				PhyNet = XML(event.target.data);//将得到的数据转换成XML类型
+				var nodeCount:int = PhyNet.nodes.node.length();
+				var linkCount:int = PhyNet.links.link.length();
+				
+				//放置节点
+				for(var nodeIndex:int=0;nodeIndex < nodeCount;nodeIndex++){
+					var node:Node = new Node;
+					node.name = "N"+PhyNet.nodes.node[nodeIndex].@label;
+					node.setLocation((PhyNet.nodes.node[nodeIndex].@x)*phyNetwork.width/100,(PhyNet.nodes.node[nodeIndex].@y)*phyNetwork.height/100);
+					phynodes.push(node);
+					phyNetwork.elementBox.add(node);
+				}
+				//放置链路
+				for(var linkIndex:int=0;linkIndex < linkCount;linkIndex++){
+					var link:Link = new Link;
+					link.name = "L"+PhyNet.links.link[linkIndex].@label;
+					link.fromNode = phynodes[PhyNet.links.link[linkIndex].@fromNode];
+					link.toNode = phynodes[PhyNet.links.link[linkIndex].@toNode];
+					phylinks.push(link);
+					phyNetwork.elementBox.add(link);
+				}
+				
+				trace("fangzhi jie");
+			}
+			//加载物理网-EN
+		
+			protected function text1_focusInHandler(event1:FocusEvent):void
+			{
+				event1.target.text="";
+			}	
+			
+			
+			[Bindable] 
+			public var selectedItem:Object; 
+			
+		]]>
+	</fx:Script>
+	<!--
+	<s:BorderContainer id="mainBox" backgroundImage="@Embed(source='Images/backgroup.png')" 	
+	backgroundImageFillMode="scale" width="100%" height="100%" borderVisible="false">
+	-->
+	
+	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false">
+		<mx:HDividedBox id="hdb" width="100%" height="100%">
+			<mx:VBox id="treeBox" width="267" height="100%" minWidth="0" horizontalScrollPolicy="off" horizontalAlign="left" backgroundColor="#7094C9">
+				<mx:Box id="buttonBox" height="13.2%" width="100%" horizontalAlign="left" paddingTop="2" paddingBottom="2">
+					<s:Button label="拓扑文件列表" width="236" click="loadphy_clickHandler(event)" skinClass="skin.topoCheckSkin"/>
+					
+					<mx:List id="source" width="243" color="blue" 
+							 dataProvider="{subTopoFileName}"  
+							 change="this.selectedItem=List(event.target).selectedItem"
+							 click="topoFileSelected(event)" height="293"/>
+					
+				</mx:Box> 
+				
+				<s:BorderContainer top="50%" height="100%" width="100%" backgroundAlpha=".1">
+					<s:Button x="159" y="67" label="提交" id="toposubmit" click="PhyNetworkCheck(event)" skinClass="skin.buttonStyle"/>
+					<s:TextInput x="6" y="68" width="141" text= "{selectedItem}" id="topofilenameinput" enabled="true" focusIn ="text1_focusInHandler(event)" change="topoFileNameInput(topofilenameinput.text)" height="32"/>
+				</s:BorderContainer>
+				
+			</mx:VBox>
+			<s:BorderContainer width="100%" height="100%" backgroundAlpha=".1" backgroundColor="#f1f1f1" skinClass="skin.bgImg">
+				<twaver:Network id="phyNetwork" left="0" top="0" width="100%" height="100%" 
+								keyboardRemoveEnabled="false" backgroundColor="black" backgroundAlpha="0" visible="false" includeInLayout="false">
+				</twaver:Network>
+				<s:BorderContainer id="virNetSet"  width="563" height="100%" textJustify="interWord" backgroundColor="#f1f1f1" x="10">
+					
+					<s:BorderContainer id="head" height="135" width="382" x="306" borderVisible="false" backgroundColor="#f1f1f1">
+					</s:BorderContainer>
+					
+					
+				</s:BorderContainer>
+				
+			</s:BorderContainer>
+			
+		</mx:HDividedBox>
+	</s:BorderContainer>
+	
+</mx:VBox>

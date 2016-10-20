@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <VN label="0">
+    <nodes>
+      <node label="0" x="751" y="891" toNode="2"/>
+      <node label="1" x="175" y="842" toNode="1"/>
+      <node label="2" x="645" y="533" toNode="3"/>
+      <node label="3" x="758" y="934" toNode="0"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="0" toNode="3" BandwidthNeed="35.638302">
+        <linkmap toLink="1"/>
+      </link>
+      <link label="1" fromNode="1" toNode="3" BandwidthNeed="99.79699">
+        <linkmap toLink="0"/>
+      </link>
+      <link label="2" fromNode="2" toNode="3" BandwidthNeed="3.566644">
+        <linkmap toLink="1"/>
+        <linkmap toLink="2"/>
+      </link>
+    </links>
+    <bw needed="139.001936" cost="142.56858" cost-needed="1.025659"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="0"/>
+    </alarms>
+  </VN>
+  <VN label="1">
+    <nodes>
+      <node label="0" x="621" y="224" toNode="6"/>
+      <node label="1" x="654" y="278" toNode="9"/>
+      <node label="2" x="751" y="891" toNode="2"/>
+      <node label="3" x="609" y="332" toNode="11"/>
+      <node label="4" x="645" y="533" toNode="3"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="0" toNode="4" BandwidthNeed="5.016789">
+        <linkmap toLink="5"/>
+      </link>
+      <link label="1" fromNode="1" toNode="4" BandwidthNeed="76.670115">
+        <linkmap toLink="9"/>
+      </link>
+      <link label="2" fromNode="2" toNode="4" BandwidthNeed="80.333016">
+        <linkmap toLink="2"/>
+      </link>
+      <link label="3" fromNode="3" toNode="4" BandwidthNeed="69.871301">
+        <linkmap toLink="11"/>
+      </link>
+    </links>
+    <bw needed="231.891221" cost="231.891221" cost-needed="1.000000"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="0"/>
+    </alarms>
+  </VN>
+  <VN label="2">
+    <nodes>
+      <node label="0" x="653" y="558" toNode="4"/>
+      <node label="1" x="533" y="859" toNode="5"/>
+      <node label="2" x="957" y="787" toNode="8"/>
+      <node label="3" x="621" y="224" toNode="6"/>
+      <node label="4" x="175" y="842" toNode="1"/>
+      <node label="5" x="645" y="533" toNode="3"/>
+      <node label="6" x="216" y="665" toNode="7"/>
+      <node label="7" x="751" y="891" toNode="2"/>
+    </nodes>
+    <links>
+      <link label="0" fromNode="0" toNode="7" BandwidthNeed="64.560148">
+        <linkmap toLink="3"/>
+      </link>
+      <link label="1" fromNode="1" toNode="7" BandwidthNeed="53.855652">
+        <linkmap toLink="4"/>
+      </link>
+      <link label="2" fromNode="2" toNode="7" BandwidthNeed="14.834194">
+        <linkmap toLink="8"/>
+      </link>
+      <link label="3" fromNode="3" toNode="7" BandwidthNeed="57.902151">
+        <linkmap toLink="2"/>
+        <linkmap toLink="5"/>
+      </link>
+      <link label="4" fromNode="4" toNode="7" BandwidthNeed="3.29634">
+        <linkmap toLink="1"/>
+        <linkmap toLink="0"/>
+      </link>
+      <link label="5" fromNode="5" toNode="7" BandwidthNeed="70.091035">
+        <linkmap toLink="2"/>
+      </link>
+      <link label="6" fromNode="6" toNode="7" BandwidthNeed="51.815067">
+        <linkmap toLink="3"/>
+        <linkmap toLink="7"/>
+      </link>
+    </links>
+    <bw needed="316.354587" cost="429.368145" cost-needed="1.357237"/>
+    <alarms>
+      <alarmNodes count="0"/>
+      <alarmLinks count="1">
+        <alarmLink label="1" utilization="0.9755599556186445"/>
+      </alarmLinks>
+    </alarms>
+  </VN>
+  <vnLeaves reqId="2"/>
+  <vnLeaves reqId="0"/>
+  <vnLeaves reqId="1"/>
+  <Evaluation Arrived="3" SuccessNum="3" FailNum="0" AcceptRate="1.0" Revenue="688.240254" Cost="804.820456" CR="1.169389">
+    <failVN/>
+  </Evaluation>
+</root>

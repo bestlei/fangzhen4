@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+  <links>
+    <link id="0" bw="2.50302" linkFrom="0" linkTo="1" utilization="0.9714849929667722"/>
+    <link id="1" bw="18.761754" linkFrom="0" linkTo="2" utilization="0.6440089354511354"/>
+    <link id="2" bw="19.57432" linkFrom="0" linkTo="3" utilization="0.7964262459791357"/>
+    <link id="3" bw="65.214273" linkFrom="1" linkTo="5" utilization="0.0"/>
+    <link id="4" bw="99.611423" linkFrom="2" linkTo="7" utilization="0.0"/>
+    <link id="5" bw="57.54929" linkFrom="3" linkTo="9" utilization="0.37098011851842627"/>
+    <link id="6" bw="64.541433" linkFrom="4" linkTo="8" utilization="0.0"/>
+    <link id="7" bw="91.338471" linkFrom="4" linkTo="0" utilization="0.0"/>
+    <link id="8" bw="55.486634" linkFrom="6" linkTo="9" utilization="0.0"/>
+    <link id="9" bw="80.6221" linkFrom="6" linkTo="8" utilization="0.0"/>
+    <link id="10" bw="93.663567" linkFrom="7" linkTo="1" utilization="0.0"/>
+    <link id="11" bw="63.022242" linkFrom="8" linkTo="9" utilization="0.0"/>
+    <link id="12" bw="76.647992" linkFrom="9" linkTo="7" utilization="0.0"/>
+    <link id="13" bw="50.300239" linkFrom="9" linkTo="5" utilization="0.0"/>
+    <link id="14" bw="60.110639" linkFrom="5" linkTo="7" utilization="0.0"/>
+  </links>
+</root>

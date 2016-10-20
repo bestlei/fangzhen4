@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:twaver="http://www.servasoftware.com/2009/twaver/flex"
+		 creationComplete="init();"
+		 width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" borderVisible="false">
+	<fx:Script>
+		<![CDATA[
+			import flexunit.utils.ArrayList;
+			
+			import skin.dropDownListSkin;
+
+
+			private var vir_Fault_Generated:String;
+			private var phy_Fault_Generated:String;
+			private var vir_Fault_Detected:String;
+			private var phy_Fault_Detected:String;
+			protected function bt_virReset_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				tvirNum.text = "20";
+				tvirProbNum.text = "3";
+				virMaxNum.text = "4";
+				virAverage.text = "0.5";
+				virVariance.text = "0.1";
+			}
+			protected function bt_phyReset_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				tphyNum.text = "100";
+				tphyProbNum.text = "10";
+				phyMaxNum.text = "8";
+				phyAverage.text = "0.05";
+				phyVariance.text = "0.1";
+			}
+
+            //故障生成按钮
+			protected function bt_faultgenerate_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				generate_Fault.addEventListener(ResultEvent.RESULT,Fault_Generated);
+				generate_Fault.probeEntrance(parseInt(tvirNum.text),parseInt(tvirProbNum.text),parseInt(tphyNum.text),parseInt(tphyProbNum.text),parseInt(virMaxNum.text),parseInt(phyMaxNum.text),virAverage.text,virVariance.text,phyAverage.text,phyVariance.text);
+			}
+			protected function Fault_Generated(event:ResultEvent):void{
+				var Fault_ArrayList:ArrayCollection;
+				Fault_ArrayList = event.result as ArrayCollection;
+				virFaultResult.text = Fault_ArrayList[0].toString();
+				phyFaultResult.text = Fault_ArrayList[1].toString();
+			}
+			//故障探测
+			protected function bt_faultdetect_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				detect_Fault.addEventListener(ResultEvent.RESULT,Fault_Detection);
+				detect_Fault.fault_Detection(virRestrian.text,virLeak.text,phyRestrian.text,phyLeak.text);
+			}
+			protected function Fault_Detection(event:ResultEvent):void{
+				var Detect_ArrayList:ArrayCollection;
+				Detect_ArrayList = event.result as ArrayCollection;
+				virFaultDetect.text = Detect_ArrayList[0].toString();
+				phyFaultDetect.text = Detect_ArrayList[1].toString();
+				
+			}
+            //重置故障探测相关参数
+			protected function bt_faultParameter_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				virRestrian.text = "0.01";
+				virLeak.text = "0.1";
+				phyRestrian.text = "0.01";
+				phyLeak.text = "0.1";
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:ArrayCollection id="subNetXMLList"/>
+		
+		<s:RemoteObject id="generate_Fault" destination="faultGenerate" endpoint="messagebroker/amf"/>
+		<s:RemoteObject id="detect_Fault" destination="faultDetect" endpoint="messagebroker/amf"/>
+	</fx:Declarations>
+	
+	<!--
+	<fx:Script source="physicalNetView_as.as"/>
+	-->
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.binding.utils.BindingUtils;
+			import common.DividerFunc;
+			
+			import flash.events.*;
+			import flash.net.FileReference;
+			import flash.utils.Timer;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.List;
+			import mx.events.CloseEvent;
+			import mx.events.DividerEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.remoting.RemoteObject;
+			
+			import skin.buttonSkin;
+			
+			
+			
+			import mx.effects.easing.Bounce;
+			
+			//初始化
+			private function init():void{
+				
+			}
+			
+			
+			
+			//上传物理网络-start
+			private function faultGenerate():void{
+				fault_Detect.visible = false;
+				fault_Generate.visible = true;
+			}
+			private function faultDetect():void{
+				fault_Detect.visible = true;
+				fault_Generate.visible = false;
+			}
+		
+		]]>
+	</fx:Script>
+	<!--
+	<s:BorderContainer id="mainBox" backgroundImage="@Embed(source='Images/backgroup.png')" 	
+	backgroundImageFillMode="scale" width="100%" height="100%" borderVisible="false">
+	-->
+	
+	<s:BorderContainer id="mainBox" backgroundColor="#f1f1f1" width="100%" height="100%" borderVisible="false">
+		<mx:HDividedBox id="hdb" width="100%" height="100%">
+			<mx:VBox id="treeBox" width="20%" height="100%" minWidth="0" horizontalScrollPolicy="off" horizontalAlign="left" backgroundColor="#7094C9">
+				<mx:Box id="buttonBox" height="13.2%" width="100%" horizontalAlign="left" paddingTop="2" paddingBottom="2">
+					<s:Button label="故障生成" id="faultgenerate"  height="100%"  width="100%"   click="faultGenerate()" skinClass="skin.faultGenerate" />						
+					<s:Button label="故障探测" id="faultdetect"  height="100%"  width="100%"   click="faultDetect()" skinClass="skin.faultGenerate" />
+				</mx:Box> 
+			</mx:VBox>
+			<s:BorderContainer width="100%" height="100%" backgroundAlpha=".1" backgroundColor="#f1f1f1">
+				<s:BorderContainer id="fault_Generate" width="100%" height="100%" textJustify="interWord" backgroundColor="#f1f1f1">
+					<mx:TabNavigator id="networkParameter" height="100%" width="100%">
+						<s:NavigatorContent id="networkparameter" top="0" label="网络参数设置" skinClass="skin.bgImg">
+							<s:Panel x="17" y="5" width="45%" height="98%" left="10" title="虚拟网络设置">
+								<s:Label id="l14" text="虚拟节点数" x="50" y="140"/>
+								<s:TextInput id="tvirNum"  x="216" y="140"  width="70" text="20"/>
+								<s:Label id="l0" text="虚拟探针数量" x="50" y="200"/>
+								<s:TextInput id="tvirProbNum"  x="216" y="200"  width="70" text="3"/>
+								<s:Label id="l1" text="虚拟故障数目上限" x="50" y="260"/>
+								<s:TextInput id="virMaxNum"  x="218" y="260"  width="70" text="4"/>
+								<s:Label id="l2" text="虚拟故障分布均值" x="50" y="320"/>
+								<s:TextInput id="virAverage"  x="218" y="320"  width="70" text="0.05"/>
+								<s:Label id="l3" text="虚拟故障分布方差" x="50" y="380"/>
+								<s:TextInput id="virVariance"  x="217" y="380"  width="70" text="0.01"/>
+								<s:Button x="174" y="500" label="重置" id="bt_virReset" click="bt_virReset_clickHandler(event)"/>
+							</s:Panel>
+							<s:Panel x="625" y="5" width="45%" height="98%" right="10" title="物理网络设置">
+								<s:Label id="l4" text="物理节点数" x="48" y="142"/>
+								<s:TextInput id="tphyNum"  x="218" y="140"  width="70" text="20"/>
+								<s:Label id="l5" text="物理探针数量" x="48" y="202"/>
+								<s:TextInput id="tphyProbNum"  x="218" y="200"  width="70" text="3"/>
+								<s:Label id="l6" text="物理故障数目上限" x="48" y="260" />
+								<s:TextInput id="phyMaxNum"  x="218" y="260"  width="70" text="4"/>
+								<s:Label id="l7" text="物理故障分布均值" x="48" y="320"/>
+								<s:TextInput id="phyAverage"  x="218" y="320"  width="70" text="0.05"/>
+								<s:Label id="l8" text="物理故障分布方差" x="51" y="380"/>
+								<s:TextInput id="phyVariance"  x="218" y="380"  width="70" text="0.01"/>
+								<s:Button x="174" y="500" label="重置" id="bt_phyReset" click="bt_phyReset_clickHandler(event)"/>
+							</s:Panel>
+						</s:NavigatorContent>
+						<s:NavigatorContent id="faultgenerated" label="故障生成" skinClass="skin.bgImg">
+							<s:Panel x="16" y="5" title="虚拟网络故障信息"  left="10" width="45%" height="98%">
+								<s:TextArea x="3" y="3" id="virFaultResult" text="" height="98%" width="98%" editable="false"/>
+							</s:Panel>
+							<s:BorderContainer horizontalCenter="0" width="8%" height="98%" y="5" borderVisible="false" skinClass="skin.bgImg">
+								<s:Button label="生成故障" height="35" verticalCenter="2" id="bt_faultgenerate" click="bt_faultgenerate_clickHandler(event)" x="10"/>
+							</s:BorderContainer>
+							<s:Panel x="315" y="5" title="物理网络故障信息" right="10" width="45%" height="98%">
+								<s:TextArea x="3" y="3" id="phyFaultResult" text="" height="98%" width="98%" editable="false"/>
+							</s:Panel>
+						</s:NavigatorContent>
+					</mx:TabNavigator>	
+				</s:BorderContainer>
+				<s:BorderContainer id="fault_Detect" width="100%" height="100%" textJustify="interWord" backgroundColor="#f1f1f1" visible="false">
+					<mx:TabNavigator id="faultRelative" height="100%" width="100%" styleName="skin.bgImg">
+						<s:NavigatorContent id="faultParameter" label="探测参数设置" skinClass="skin.bgImg">
+							<s:BorderContainer width="100%" height="100%" textAlign="center" fontSize="14">
+								<s:Label id="l9" left="180" top="80" text="虚拟网络抑制概率"/>
+								<s:TextInput id="virRestrian" left="300" top="80" text="0.01"/>
+								<s:Label id="l10" left="180" top="130" text="虚拟网络泄露概率"/>
+								<s:TextInput id="virLeak" left="300" top="130" text="0.1"/>
+								<s:Label id="l11" left="180" top="180" text="物理网络抑制概率"/>
+								<s:TextInput id="phyRestrian" left="300" top="180" text="0.01"/>
+								<s:Label id="l12" left="180" top="230" text="物理网络泄露概率"/>
+								<s:TextInput id="phyLeak" left="300" top="230" text="0.1"/>
+								<s:Button left="280" label="重置" top="280" id="bt_faultParameter" click="bt_faultParameter_clickHandler(event)"/>
+							</s:BorderContainer>
+						</s:NavigatorContent>
+						<s:NavigatorContent id="faultdetected" label="故障探测" skinClass="skin.bgImg">
+							<s:Panel x="16" y="5" left="10" width="45%" height="98%" enabled="true" title="虚拟网络探测结果">
+								<s:TextArea x="3" y="3" id="virFaultDetect" height="98%" width="98%" />
+							</s:Panel>
+							<s:BorderContainer horizontalCenter="0" width="8%" height="98%" y="5" borderVisible="false">
+								<s:Button label="故障探测" height="35" verticalCenter="0" id="bt_faultdetect" click="bt_faultdetect_clickHandler(event)"/>
+							</s:BorderContainer>
+							<s:Panel x="315" y="5" right="10" width="45%" height="98%" title="物理网络探测结果">
+								<s:TextArea x="3" y="3" id="phyFaultDetect" text="" height="98%" width="98%"/>
+							</s:Panel>
+						</s:NavigatorContent>
+					</mx:TabNavigator>
+				</s:BorderContainer>
+			</s:BorderContainer>
+		</mx:HDividedBox>
+	</s:BorderContainer>
+	
+</mx:VBox>
