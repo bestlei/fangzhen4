@@ -348,6 +348,8 @@
 								<province label="虚拟网络信息"> 
 									<city label="虚拟节点信息"/> 
 									<city label="虚拟链路信息"/> 
+									<city label="虚拟节点信息"/> 
+									<city label="虚拟链路信息"/> 
 								</province> 
 								<province label="告警信息"> 
 									<city label="告警信息详情"/>  
